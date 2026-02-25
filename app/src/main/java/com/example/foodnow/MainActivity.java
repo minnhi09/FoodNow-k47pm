@@ -4,7 +4,11 @@ import android.os.Bundle;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 
+import com.example.foodnow.fragments.CartFragment;
+import com.example.foodnow.fragments.FavoritesFragment;
 import com.example.foodnow.fragments.HomeFragment;
+import com.example.foodnow.fragments.OrdersFragment;
+import com.example.foodnow.fragments.ProfileFragment;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 public class MainActivity extends AppCompatActivity {
@@ -28,14 +32,11 @@ public class MainActivity extends AppCompatActivity {
             if (id == R.id.nav_home) {
                 selectedFragment = new HomeFragment();
             } else if (id == R.id.nav_orders) {
-                // Sau này thay bằng: new OrdersFragment()
-                selectedFragment = new HomeFragment();
+                selectedFragment = new OrdersFragment();
             } else if (id == R.id.nav_favorites) {
-                // Sau này thay bằng: new FavoritesFragment()
-                selectedFragment = new HomeFragment();
+                selectedFragment = new FavoritesFragment();
             } else if (id == R.id.nav_profile) {
-                // Sau này thay bằng: new ProfileFragment()
-                selectedFragment = new HomeFragment();
+                selectedFragment = new ProfileFragment();
             }
 
             return loadFragment(selectedFragment);

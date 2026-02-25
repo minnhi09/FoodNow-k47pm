@@ -1,5 +1,6 @@
 package com.example.foodnow.fragments;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -8,22 +9,32 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.widget.SearchView;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.foodnow.R;
+import com.example.foodnow.activities.StoreDetailActivity;
+import com.example.foodnow.adapters.CategoryAdapter;
 import com.example.foodnow.adapters.StoreAdapter;
+import com.example.foodnow.models.Category;
 import com.example.foodnow.models.Store;
+import com.example.foodnow.viewmodels.HomeViewModel;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class HomeFragment extends Fragment {
 
-    private RecyclerView rvStores;
-    private StoreAdapter adapter;
-    private List<Store> storeList;
+    private RecyclerView rvStores, rvCategories;
+    private StoreAdapter storeAdapter;
+    private CategoryAdapter categoryAdapter;
+    private List<Store> storeList = new ArrayList<>();
+    private List<Store> allStores = new ArrayList<>();
+    private List<Category> categoryList = new ArrayList<>();
+    private HomeViewModel homeViewModel;
 
     @Nullable
     @Override
@@ -31,38 +42,81 @@ public class HomeFragment extends Fragment {
                              @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
 
-        // ① Inflate: đọc fragment_home.xml → tạo View thật
         View view = inflater.inflate(R.layout.fragment_home, container, false);
 
-        // ② Lấy RecyclerView từ layout
-        rvStores = view.findViewById(R.id.rv_store_or_food);
+        // Ánh xạ RecyclerView
+        rvStores     = view.findViewById(R.id.rv_store_or_food);
+        rvCategories = view.findViewById(R.id.rv_categories);
+        SearchView svSearch = view.findViewById(R.id.sv_search);
 
-        // ③ Tạo dữ liệu giả để test giao diện
-        storeList = taoduLieuGia();
+        // Setup danh mục (RecyclerView ngang)
+        categoryAdapter = new CategoryAdapter(getContext(), categoryList, category -> {
+            Toast.makeText(getContext(), "Danh mục: " + category.getName(), Toast.LENGTH_SHORT).show();
+        });
+        rvCategories.setLayoutManager(
+                new LinearLayoutManager(getContext(), LinearLayoutManager.HORIZONTAL, false));
+        rvCategories.setAdapter(categoryAdapter);
 
-        // ④ Tạo Adapter, xử lý sự kiện click
-        adapter = new StoreAdapter(getContext(), storeList, store -> {
-            Toast.makeText(getContext(),
-                    "Bạn chọn: " + store.getName(),
-                    Toast.LENGTH_SHORT).show();
+        // Setup danh sách quán
+        storeAdapter = new StoreAdapter(getContext(), storeList, store -> {
+            // Mở chi tiết quán
+            Intent intent = new Intent(getContext(), StoreDetailActivity.class);
+            intent.putExtra(StoreDetailActivity.EXTRA_STORE_ID, store.getId());
+            intent.putExtra(StoreDetailActivity.EXTRA_STORE_NAME, store.getName());
+            intent.putExtra(StoreDetailActivity.EXTRA_STORE_DESC, store.getDescription());
+            intent.putExtra(StoreDetailActivity.EXTRA_STORE_IMG, store.getImageUrl());
+            intent.putExtra(StoreDetailActivity.EXTRA_STORE_RATING, store.getRating());
+            intent.putExtra(StoreDetailActivity.EXTRA_STORE_TIME, store.getDeliveryTime());
+            startActivity(intent);
+        });
+        rvStores.setLayoutManager(new LinearLayoutManager(getContext()));
+        rvStores.setAdapter(storeAdapter);
+
+        // Khởi tạo ViewModel và quan sát dữ liệu
+        homeViewModel = new ViewModelProvider(this).get(HomeViewModel.class);
+
+        homeViewModel.getStores().observe(getViewLifecycleOwner(), stores -> {
+            allStores.clear();
+            allStores.addAll(stores);
+            storeList.clear();
+            storeList.addAll(stores);
+            storeAdapter.notifyDataSetChanged();
         });
 
-        // ⑤ Gắn LayoutManager + Adapter vào RecyclerView
-        rvStores.setLayoutManager(new LinearLayoutManager(getContext()));
-        rvStores.setAdapter(adapter);
+        homeViewModel.getCategories().observe(getViewLifecycleOwner(), categories -> {
+            categoryList.clear();
+            categoryList.addAll(categories);
+            categoryAdapter.notifyDataSetChanged();
+        });
+
+        // Tìm kiếm quán theo tên
+        svSearch.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+            @Override
+            public boolean onQueryTextSubmit(String query) { return false; }
+
+            @Override
+            public boolean onQueryTextChange(String newText) {
+                filterStores(newText);
+                return true;
+            }
+        });
 
         return view;
     }
 
-    // Dữ liệu giả để xem giao diện — chưa cần Firebase
-    private List<Store> taoduLieuGia() {
-        List<Store> list = new ArrayList<>();
-        list.add(new Store("1", "Phở Hà Nội",    "Quán phở ngon",    "45 Nguyễn Chí Thanh", "0911111111", "", 4.8f, "15 phút", 15000, true));
-        list.add(new Store("2", "Pizza Sài Gòn",  "Pizza Ý chính gốc","12 Lê Lợi",           "0922222222", "", 4.5f, "25 phút", 20000, true));
-        list.add(new Store("3", "Bún Bò Huế",     "Bún bò truyền thống","78 Trần Phú",       "0933333333", "", 4.7f, "20 phút", 10000, true));
-        list.add(new Store("4", "KFC Đà Lạt",     "Gà rán giòn",     "99 Phan Đình Phùng",  "0944444444", "", 4.3f, "30 phút", 25000, true));
-        list.add(new Store("5", "Cơm Tấm 3A",     "Cơm tấm sườn bì","33 Hai Bà Trưng",     "0955555555", "", 4.6f, "18 phút", 12000, true));
-        list.add(new Store("6", "Lẩu Thái Tâm",   "Lẩu Thái cay",   "56 Bùi Thị Xuân",     "0966666666", "", 4.4f, "35 phút", 18000, true));
-        return list;
+    /** Lọc danh sách quán theo keyword */
+    private void filterStores(String keyword) {
+        storeList.clear();
+        if (keyword == null || keyword.isEmpty()) {
+            storeList.addAll(allStores);
+        } else {
+            String lower = keyword.toLowerCase();
+            for (Store store : allStores) {
+                if (store.getName() != null && store.getName().toLowerCase().contains(lower)) {
+                    storeList.add(store);
+                }
+            }
+        }
+        storeAdapter.notifyDataSetChanged();
     }
 }

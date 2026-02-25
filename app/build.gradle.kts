@@ -5,12 +5,12 @@ plugins {
 
 android {
     namespace = "com.example.foodnow"
-    compileSdk = 35
+    compileSdk = 34
 
     defaultConfig {
         applicationId = "com.example.foodnow"
         minSdk = 24
-        targetSdk = 35
+        targetSdk = 34
         versionCode = 1
         versionName = "1.0"
 
@@ -64,6 +64,9 @@ dependencies {
     // ViewModel + LiveData (MVVM)
     implementation("androidx.lifecycle:lifecycle-viewmodel:2.8.7")
     implementation("androidx.lifecycle:lifecycle-livedata:2.8.7")
+
+    // Cloudinary (upload ảnh)
+    implementation("com.cloudinary:cloudinary-android:3.0.2")
     // ← ĐẾN ĐÂY
 
     testImplementation(libs.junit)

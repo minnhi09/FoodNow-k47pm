@@ -42,6 +42,5 @@ com.example.foodnow/
 ## Key repository conventions
 - Preserve Vietnamese-language UI text, comments, and sample data when editing existing code.
 - Firestore models require an **empty constructor** and **getters/setters** for deserialization.
-- Preserve the project’s current Vietnamese-facing text/comment style when editing existing flows (UI labels, sample data, inline comments).
 - Dependencies use both version-catalog aliases (`libs.*`) and explicit coordinates — follow whichever style exists in the touched file.
 - Database schema reference: `.github/db.md`

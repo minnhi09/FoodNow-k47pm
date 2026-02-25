@@ -10,6 +10,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide;
 import com.example.foodnow.R;
 import com.example.foodnow.models.Store;
 
@@ -60,6 +61,14 @@ public class StoreAdapter extends RecyclerView.Adapter<StoreAdapter.StoreViewHol
         holder.tvCategory.setText(store.getDescription());
         holder.tvRating.setText("⭐ " + store.getRating());
         holder.tvTime.setText(store.getDeliveryTime());
+
+        // Load ảnh bằng Glide
+        if (store.getImageUrl() != null && !store.getImageUrl().isEmpty()) {
+            Glide.with(context)
+                    .load(store.getImageUrl())
+                    .placeholder(R.mipmap.ic_launcher)
+                    .into(holder.imgStore);
+        }
 
         // Xử lý sự kiện click vào 1 dòng
         holder.itemView.setOnClickListener(v -> {
