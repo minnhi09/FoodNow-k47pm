@@ -43,8 +43,9 @@ public class RegisterActivity extends AppCompatActivity {
         // Quan sát trạng thái
         authViewModel.getUserLiveData().observe(this, user -> {
             if (user != null) {
-                startActivity(new Intent(this, MainActivity.class));
-                finish();
+                Intent intent = new Intent(this, MainActivity.class);
+                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                startActivity(intent);
             }
         });
 

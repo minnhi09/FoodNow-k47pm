@@ -32,7 +32,7 @@ public class CloudinaryHelper {
     public static void init(Context context) {
         if (initialized) return;
         Map<String, Object> config = new HashMap<>();
-        config.put("cloud_name", "foodnow_unsigned");
+        config.put("cloud_name", "YOUR_CLOUD_NAME"); // TODO: thay bằng cloud_name thật từ Cloudinary Dashboard
         // Với unsigned upload, không cần api_key/api_secret
         MediaManager.init(context, config);
         initialized = true;

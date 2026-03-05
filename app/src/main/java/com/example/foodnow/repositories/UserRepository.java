@@ -41,6 +41,7 @@ public class UserRepository {
     /** Cập nhật thông tin user */
     public Task<Void> updateUser(Map<String, Object> updates) {
         String uid = getCurrentUserId();
+        if (uid.isEmpty()) return null;
         return db.collection("Users").document(uid).update(updates);
     }
 

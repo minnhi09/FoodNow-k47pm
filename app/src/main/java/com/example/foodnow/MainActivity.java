@@ -4,7 +4,6 @@ import android.os.Bundle;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 
-import com.example.foodnow.fragments.CartFragment;
 import com.example.foodnow.fragments.FavoritesFragment;
 import com.example.foodnow.fragments.HomeFragment;
 import com.example.foodnow.fragments.OrdersFragment;

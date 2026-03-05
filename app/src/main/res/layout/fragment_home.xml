@@ -8,20 +8,19 @@
     android:background="@color/white"
     tools:context=".fragments.HomeFragment">
 
-    <!-- Thanh tìm kiếm -->
-    <androidx.appcompat.widget.SearchView
-        android:id="@+id/sv_search"
+    <!-- Tiêu đề -->
+    <TextView
+        android:id="@+id/tv_home_title"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:iconifiedByDefault="false"
-        android:queryHint="Tìm quán ăn, món ăn..."
+        android:text="Danh mục"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="16dp"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0"
-        android:layout_marginStart="16dp"
-        android:layout_marginEnd="16dp"
-        android:layout_marginTop="12dp" />
+        app:layout_constraintEnd_toEndOf="parent" />
 
     <!-- RecyclerView danh mục (ngang) -->
     <androidx.recyclerview.widget.RecyclerView
@@ -35,25 +34,8 @@
         android:paddingBottom="8dp"
         android:orientation="horizontal"
         app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
-        app:layout_constraintTop_toBottomOf="@id/sv_search"
+        app:layout_constraintTop_toBottomOf="@id/tv_home_title"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
-
-    <!-- RecyclerView danh sách quán / món -->
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/rv_store_or_food"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:clipToPadding="false"
-        android:paddingStart="16dp"
-        android:paddingEnd="16dp"
-        android:paddingTop="8dp"
-        android:paddingBottom="16dp"
-        app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
-        app:layout_constraintTop_toBottomOf="@id/rv_categories"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        tools:listitem="@layout/item_store" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
