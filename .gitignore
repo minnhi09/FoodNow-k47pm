@@ -13,3 +13,9 @@
 .externalNativeBuild
 .cxx
 local.properties
+
+# Firebase service account key (secret — không commit)
+**/serviceAccountKey.json
+
+# Node.js
+scripts/node_modules/
