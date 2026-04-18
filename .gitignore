@@ -9,14 +9,22 @@
 /.idea/assetWizardSettings.xml
 .DS_Store
 /build
+/app/build
+**/build/
 /captures
 .externalNativeBuild
 .cxx
 local.properties
+*.apk
+*.aab
+
+# Logs
+*.log
 
 # Firebase service account key (secret — không commit)
 **/serviceAccountKey.json
 
+<<<<<<< HEAD
 # Google/Firebase API keys và secret files (không commit)
 **/google-services.json
 **/apikey.properties
@@ -27,6 +35,14 @@ local.properties
 **/*.secret
 **/.env
 **/.env.*
+=======
+# Google/Firebase API keys (secret — không commit)
+app/google-services.json
+**/google-services.json
+apikey.properties
+keys.properties
+secrets.properties
+>>>>>>> f0867907f518fc512581b4d03397079901b94e6b
 
 # Node.js
 scripts/node_modules/
