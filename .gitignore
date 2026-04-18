@@ -17,5 +17,16 @@ local.properties
 # Firebase service account key (secret — không commit)
 **/serviceAccountKey.json
 
+# Google/Firebase API keys và secret files (không commit)
+**/google-services.json
+**/apikey.properties
+**/keys.properties
+**/secrets.properties
+**/secret.properties
+**/*api*key*.properties
+**/*.secret
+**/.env
+**/.env.*
+
 # Node.js
 scripts/node_modules/
