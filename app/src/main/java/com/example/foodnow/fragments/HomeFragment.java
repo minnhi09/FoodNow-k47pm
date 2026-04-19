@@ -4,19 +4,23 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.foodnow.R;
 import com.example.foodnow.adapters.CategoryAdapter;
+import com.example.foodnow.adapters.RecommendedFoodAdapter;
 import com.example.foodnow.adapters.StoreAdapter;
 import com.example.foodnow.models.Category;
+import com.example.foodnow.models.RecommendedFood;
 import com.example.foodnow.models.Store;
 import com.example.foodnow.viewmodels.HomeViewModel;
 
@@ -28,13 +32,18 @@ public class HomeFragment extends Fragment {
     // ── Khai báo biến ────────────────────────────────────
     private HomeViewModel homeViewModel;
 
-    private RecyclerView rvCategories, rvStores;
+    private RecyclerView rvCategories;
+    private RecyclerView rvStores;
+    private RecyclerView rvRecommendedFoods;
+    private ImageView ivHeaderCart;
 
     private CategoryAdapter categoryAdapter;
     private StoreAdapter storeAdapter;
+    private RecommendedFoodAdapter recommendedFoodAdapter;
 
-    private List<Category> categoryList = new ArrayList<>();
-    private List<Store> storeList = new ArrayList<>();
+    private final List<Category> categoryList = new ArrayList<>();
+    private final List<Store> storeList = new ArrayList<>();
+    private final List<RecommendedFood> recommendedFoodList = new ArrayList<>();
 
     @Nullable
     @Override
@@ -50,19 +59,25 @@ public class HomeFragment extends Fragment {
 
         // ① Ánh xạ view
         rvCategories = view.findViewById(R.id.rv_categories);
-        rvStores     = view.findViewById(R.id.rv_stores);
+        rvStores = view.findViewById(R.id.rv_stores);
+        rvRecommendedFoods = view.findViewById(R.id.rv_recommended_foods);
+        ivHeaderCart = view.findViewById(R.id.iv_header_cart);
 
         // ② Khởi tạo ViewModel
         homeViewModel = new ViewModelProvider(this).get(HomeViewModel.class);
 
-        // ③ Setup RecyclerView danh mục (ngang)
+        // ③ Setup dữ liệu mock + RecyclerView
+        seedMockRecommendedFoods();
         setupCategoryRecyclerView();
-
-        // ④ Setup RecyclerView quán ăn (dọc)
         setupStoreRecyclerView();
+        setupRecommendedRecyclerView();
 
-        // ⑤ Observe data từ ViewModel
+        // ④ Observe data từ ViewModel
         observeData();
+
+        // ⑤ Action click nhanh
+        ivHeaderCart.setOnClickListener(v ->
+                Toast.makeText(requireContext(), "Mở giỏ hàng", Toast.LENGTH_SHORT).show());
     }
 
     private void setupCategoryRecyclerView() {
@@ -100,12 +115,29 @@ public class HomeFragment extends Fragment {
         rvStores.setAdapter(storeAdapter);
     }
 
+    private void setupRecommendedRecyclerView() {
+        recommendedFoodAdapter = new RecommendedFoodAdapter(
+                requireContext(),
+                recommendedFoodList,
+                food -> Toast.makeText(requireContext(),
+                        "Đã thêm " + food.getName(),
+                        Toast.LENGTH_SHORT).show()
+        );
+        rvRecommendedFoods.setLayoutManager(new GridLayoutManager(requireContext(), 2));
+        rvRecommendedFoods.setAdapter(recommendedFoodAdapter);
+    }
+
     private void observeData() {
         // Observe danh mục
         homeViewModel.getCategories().observe(getViewLifecycleOwner(), categories -> {
             categoryList.clear();
-            if (categories != null) {
+            categoryList.add(new Category("all", "Tất cả", ""));
+            if (categories != null && !categories.isEmpty()) {
                 categoryList.addAll(categories);
+            } else {
+                categoryList.add(new Category("pho", "Phở", ""));
+                categoryList.add(new Category("pizza", "Pizza", ""));
+                categoryList.add(new Category("dessert", "Tráng miệng", ""));
             }
             categoryAdapter.notifyDataSetChanged();
         });
@@ -113,10 +145,67 @@ public class HomeFragment extends Fragment {
         // Observe quán ăn
         homeViewModel.getStores().observe(getViewLifecycleOwner(), stores -> {
             storeList.clear();
-            if (stores != null) {
+            if (stores != null && !stores.isEmpty()) {
                 storeList.addAll(stores);
+            } else {
+                addMockStores();
             }
             storeAdapter.notifyDataSetChanged();
         });
+    }
+
+    private void seedMockRecommendedFoods() {
+        recommendedFoodList.clear();
+        recommendedFoodList.add(new RecommendedFood(
+                "Phở Bò Đặc Biệt",
+                "Phở Hà Nội",
+                65000,
+                4.8f,
+                "https://images.unsplash.com/photo-1582878826629-29b7ad1cdc43",
+                true
+        ));
+        recommendedFoodList.add(new RecommendedFood(
+                "Gỏi Cuốn Tôm Thịt",
+                "Quán Việt",
+                35000,
+                4.7f,
+                "https://images.unsplash.com/photo-1604908176997-431ec29b605e",
+                false
+        ));
+        recommendedFoodList.add(new RecommendedFood(
+                "Cơm Gà Xối Mỡ",
+                "Cơm Gà Hải Nam",
+                45000,
+                4.6f,
+                "https://images.unsplash.com/photo-1512058564366-18510be2db19",
+                true
+        ));
+        recommendedFoodList.add(new RecommendedFood(
+                "Xiên Nướng BBQ",
+                "BBQ House",
+                25000,
+                4.5f,
+                "https://images.unsplash.com/photo-1529692236671-f1dc3ce964f1",
+                false
+        ));
+    }
+
+    private void addMockStores() {
+        storeList.add(buildStore("Phở Hà Nội", "Việt Nam", 4.8f, "20-30 phút",
+                "https://images.unsplash.com/photo-1544025162-d76694265947"));
+        storeList.add(buildStore("Bánh Mì Sài Gòn", "Việt Nam", 4.6f, "15-25 phút",
+                "https://images.unsplash.com/photo-1481070414801-51fd732d7184"));
+        storeList.add(buildStore("Trà Sữa Đài Loan", "Đồ uống", 4.9f, "10-20 phút",
+                "https://images.unsplash.com/photo-1558857563-c0c74f00b5f1"));
+    }
+
+    private Store buildStore(String name, String address, float rating, String time, String imageUrl) {
+        Store store = new Store();
+        store.setName(name);
+        store.setAddress(address);
+        store.setRating(rating);
+        store.setDeliveryTime(time);
+        store.setImageUrl(imageUrl);
+        return store;
     }
 }

@@ -14,7 +14,6 @@ import com.bumptech.glide.Glide;
 import com.example.foodnow.R;
 import com.example.foodnow.models.Store;
 
-import java.text.NumberFormat;
 import java.util.List;
 import java.util.Locale;
 
@@ -24,7 +23,6 @@ public class StoreAdapter extends RecyclerView.Adapter<StoreAdapter.ViewHolder> 
     private final Context context;
     private final List<Store> storeList;
     private final OnStoreClickListener listener;
-    private final NumberFormat currencyFormatter;
 
     // ② Interface để xử lý sự kiện click
     public interface OnStoreClickListener {
@@ -36,7 +34,6 @@ public class StoreAdapter extends RecyclerView.Adapter<StoreAdapter.ViewHolder> 
         this.context = context;
         this.storeList = storeList;
         this.listener = listener;
-        this.currencyFormatter = NumberFormat.getInstance(new Locale("vi", "VN"));
     }
 
     // ④ Inflate layout item_store.xml
@@ -53,12 +50,13 @@ public class StoreAdapter extends RecyclerView.Adapter<StoreAdapter.ViewHolder> 
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         Store store = storeList.get(position);
 
-        // Gán text
+        // Gán text theo style Figma
         holder.tvStoreName.setText(safeText(store.getName(), "Quán ăn"));
-        holder.tvStoreAddress.setText(safeText(store.getAddress(), "Chưa có địa chỉ"));
+        holder.tvStoreCountry.setText(getCountryText(store.getAddress()));
         holder.tvStoreTime.setText(getDeliveryTimeText(store.getDeliveryTime()));
-        holder.tvStoreDeliveryFee.setText(getDeliveryFeeText(store.getDeliveryFee()));
+        holder.tvStoreDistance.setText(getDistanceText(position));
         holder.tvStoreRating.setText(getRatingText(store.getRating()));
+        holder.tvStoreBadge.setVisibility(position == 0 ? View.VISIBLE : View.GONE);
 
         // Load ảnh bằng Glide
         Glide.with(context)
@@ -83,16 +81,17 @@ public class StoreAdapter extends RecyclerView.Adapter<StoreAdapter.ViewHolder> 
     // ⑦ ViewHolder — giữ tham chiếu đến các view trong item
     public static class ViewHolder extends RecyclerView.ViewHolder {
         ImageView imgStore;
-        TextView tvStoreName, tvStoreAddress, tvStoreTime, tvStoreDeliveryFee, tvStoreRating;
+        TextView tvStoreName, tvStoreCountry, tvStoreTime, tvStoreDistance, tvStoreRating, tvStoreBadge;
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
-            imgStore        = itemView.findViewById(R.id.img_store);
-            tvStoreName     = itemView.findViewById(R.id.tv_store_name);
-            tvStoreAddress  = itemView.findViewById(R.id.tv_store_address);
-            tvStoreTime     = itemView.findViewById(R.id.tv_store_time);
-            tvStoreDeliveryFee = itemView.findViewById(R.id.tv_store_delivery_fee);
-            tvStoreRating   = itemView.findViewById(R.id.tv_store_rating);
+            imgStore = itemView.findViewById(R.id.img_store);
+            tvStoreName = itemView.findViewById(R.id.tv_store_name);
+            tvStoreCountry = itemView.findViewById(R.id.tv_store_country);
+            tvStoreTime = itemView.findViewById(R.id.tv_store_time);
+            tvStoreDistance = itemView.findViewById(R.id.tv_store_distance);
+            tvStoreRating = itemView.findViewById(R.id.tv_store_rating);
+            tvStoreBadge = itemView.findViewById(R.id.tv_store_badge);
         }
     }
 
@@ -107,11 +106,16 @@ public class StoreAdapter extends RecyclerView.Adapter<StoreAdapter.ViewHolder> 
         return safeText(deliveryTime, "Đang cập nhật");
     }
 
-    private String getDeliveryFeeText(long deliveryFee) {
-        if (deliveryFee <= 0) {
-            return "Phí giao hàng: Miễn phí";
+    private String getCountryText(String address) {
+        if (address == null || address.trim().isEmpty()) {
+            return "Việt Nam";
         }
-        return "Phí giao hàng: " + currencyFormatter.format(deliveryFee) + "đ";
+        return address;
+    }
+
+    private String getDistanceText(int position) {
+        String[] distances = {"1.2 km", "0.8 km", "0.5 km", "1.4 km", "1.0 km"};
+        return distances[position % distances.length];
     }
 
     private String getRatingText(float rating) {
