@@ -91,6 +91,9 @@ public class Store {
     public void setOpen(boolean open) {
         isOpen = open;
     }
+    public void setIsOpen(boolean open) {
+        isOpen = open;
+    }
     public void setStoreOwnerId(String storeOwnerId) {
         this.storeOwnerId = storeOwnerId;
     }

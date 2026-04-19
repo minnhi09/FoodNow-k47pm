@@ -14,14 +14,17 @@ import com.bumptech.glide.Glide;
 import com.example.foodnow.R;
 import com.example.foodnow.models.Store;
 
+import java.text.NumberFormat;
 import java.util.List;
+import java.util.Locale;
 
 public class StoreAdapter extends RecyclerView.Adapter<StoreAdapter.ViewHolder> {
 
     // ① Khai báo biến
-    private Context context;
-    private List<Store> storeList;
-    private OnStoreClickListener listener;
+    private final Context context;
+    private final List<Store> storeList;
+    private final OnStoreClickListener listener;
+    private final NumberFormat currencyFormatter;
 
     // ② Interface để xử lý sự kiện click
     public interface OnStoreClickListener {
@@ -33,6 +36,7 @@ public class StoreAdapter extends RecyclerView.Adapter<StoreAdapter.ViewHolder> 
         this.context = context;
         this.storeList = storeList;
         this.listener = listener;
+        this.currencyFormatter = NumberFormat.getInstance(new Locale("vi", "VN"));
     }
 
     // ④ Inflate layout item_store.xml
@@ -50,11 +54,11 @@ public class StoreAdapter extends RecyclerView.Adapter<StoreAdapter.ViewHolder> 
         Store store = storeList.get(position);
 
         // Gán text
-        holder.tvStoreName.setText(store.getName());
-        holder.tvStoreCategory.setText("Việt Nam"); // tạm thời fix cứng
-        holder.tvStoreTime.setText(store.getDeliveryTime());
-        holder.tvStoreDistance.setText("1.2 km");   // tạm thời fix cứng
-        holder.tvStoreRating.setText(String.valueOf(store.getRating()));
+        holder.tvStoreName.setText(safeText(store.getName(), "Quán ăn"));
+        holder.tvStoreAddress.setText(safeText(store.getAddress(), "Chưa có địa chỉ"));
+        holder.tvStoreTime.setText(getDeliveryTimeText(store.getDeliveryTime()));
+        holder.tvStoreDeliveryFee.setText(getDeliveryFeeText(store.getDeliveryFee()));
+        holder.tvStoreRating.setText(getRatingText(store.getRating()));
 
         // Load ảnh bằng Glide
         Glide.with(context)
@@ -79,16 +83,41 @@ public class StoreAdapter extends RecyclerView.Adapter<StoreAdapter.ViewHolder> 
     // ⑦ ViewHolder — giữ tham chiếu đến các view trong item
     public static class ViewHolder extends RecyclerView.ViewHolder {
         ImageView imgStore;
-        TextView tvStoreName, tvStoreCategory, tvStoreTime, tvStoreDistance, tvStoreRating;
+        TextView tvStoreName, tvStoreAddress, tvStoreTime, tvStoreDeliveryFee, tvStoreRating;
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
             imgStore        = itemView.findViewById(R.id.img_store);
             tvStoreName     = itemView.findViewById(R.id.tv_store_name);
-            tvStoreCategory = itemView.findViewById(R.id.tv_store_category);
+            tvStoreAddress  = itemView.findViewById(R.id.tv_store_address);
             tvStoreTime     = itemView.findViewById(R.id.tv_store_time);
-            tvStoreDistance = itemView.findViewById(R.id.tv_store_distance);
+            tvStoreDeliveryFee = itemView.findViewById(R.id.tv_store_delivery_fee);
             tvStoreRating   = itemView.findViewById(R.id.tv_store_rating);
         }
+    }
+
+    private String safeText(String value, String defaultValue) {
+        if (value == null || value.trim().isEmpty()) {
+            return defaultValue;
+        }
+        return value;
+    }
+
+    private String getDeliveryTimeText(String deliveryTime) {
+        return safeText(deliveryTime, "Đang cập nhật");
+    }
+
+    private String getDeliveryFeeText(long deliveryFee) {
+        if (deliveryFee <= 0) {
+            return "Phí giao hàng: Miễn phí";
+        }
+        return "Phí giao hàng: " + currencyFormatter.format(deliveryFee) + "đ";
+    }
+
+    private String getRatingText(float rating) {
+        if (rating <= 0f) {
+            return "0.0";
+        }
+        return String.format(Locale.US, "%.1f", rating);
     }
 }

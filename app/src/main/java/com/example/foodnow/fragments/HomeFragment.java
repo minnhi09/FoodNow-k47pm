@@ -104,14 +104,18 @@ public class HomeFragment extends Fragment {
         // Observe danh mục
         homeViewModel.getCategories().observe(getViewLifecycleOwner(), categories -> {
             categoryList.clear();
-            categoryList.addAll(categories);
+            if (categories != null) {
+                categoryList.addAll(categories);
+            }
             categoryAdapter.notifyDataSetChanged();
         });
 
         // Observe quán ăn
         homeViewModel.getStores().observe(getViewLifecycleOwner(), stores -> {
             storeList.clear();
-            storeList.addAll(stores);
+            if (stores != null) {
+                storeList.addAll(stores);
+            }
             storeAdapter.notifyDataSetChanged();
         });
     }
