@@ -100,12 +100,17 @@ cd project-nhom9
 1. Đăng ký tại [cloudinary.com](https://cloudinary.com/)
 2. Lấy **Cloud Name** từ Dashboard
 3. Tạo **Upload Preset** (unsigned) với tên: `foodnow_unsigned`
-4. Cập nhật `CloudinaryHelper.java`:
+4. Cập nhật `local.properties` (không commit file này):
 
-```java
-// File: app/src/main/java/com/example/foodnow/utils/CloudinaryHelper.java
-config.put("cloud_name", "YOUR_CLOUD_NAME"); // ← thay bằng cloud name thật
+```properties
+cloudinary.cloud_name=YOUR_CLOUD_NAME
+cloudinary.upload_preset=YOUR_UNSIGNED_UPLOAD_PRESET
 ```
+
+5. App sẽ đọc cấu hình từ:
+   - `local.properties` (`cloudinary.cloud_name`, `cloudinary.upload_preset`)
+   - hoặc Gradle properties (`CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_UPLOAD_PRESET`)
+   - nếu thiếu sẽ dùng giá trị mặc định trong `app/build.gradle.kts`
 
 ### 4. Mở dự án trong Android Studio
 

@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel;
 
 import com.example.foodnow.models.User;
 import com.example.foodnow.repositories.UserRepository;
+import com.google.android.gms.tasks.Task;
 
 import java.util.Map;
 
@@ -20,7 +21,7 @@ public class ProfileViewModel extends ViewModel {
 
     public LiveData<User> getUser() { return user; }
 
-    public void updateUser(Map<String, Object> updates) {
-        userRepository.updateUser(updates);
+    public Task<Void> updateUser(Map<String, Object> updates) {
+        return userRepository.updateUser(updates);
     }
 }

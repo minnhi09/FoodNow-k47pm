@@ -27,6 +27,20 @@
         android:src="@mipmap/ic_launcher"
         android:layout_marginBottom="16dp" />
 
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btn_change_avatar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Đổi ảnh đại diện"
+        android:layout_marginBottom="8dp" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btn_manage_images"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Quản trị ảnh Store/Food"
+        android:layout_marginBottom="16dp" />
+
     <!-- Tên -->
     <com.google.android.material.textfield.TextInputLayout
         android:layout_width="match_parent"
