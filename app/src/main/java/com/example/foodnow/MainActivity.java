@@ -11,6 +11,7 @@ import com.example.foodnow.fragments.FavoritesFragment;
 import com.example.foodnow.fragments.HomeFragment;
 import com.example.foodnow.fragments.OrdersFragment;
 import com.example.foodnow.fragments.ProfileFragment;
+import com.example.foodnow.utils.CloudinaryHelper;
 import com.google.android.material.badge.BadgeDrawable;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
@@ -19,6 +20,10 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        // Khởi tạo Cloudinary — chỉ 1 lần khi app mở
+        CloudinaryHelper.init(getApplicationContext());
+
         setContentView(R.layout.activity_main);
 
         // ① Tìm BottomNavigationView

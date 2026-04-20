@@ -5,8 +5,10 @@ import androidx.lifecycle.MutableLiveData;
 
 import com.example.foodnow.models.User;
 import com.google.android.gms.tasks.Task;
+import com.google.android.gms.tasks.Tasks;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.SetOptions;
 
 import java.util.Map;
 
@@ -41,8 +43,10 @@ public class UserRepository {
     /** Cập nhật thông tin user */
     public Task<Void> updateUser(Map<String, Object> updates) {
         String uid = getCurrentUserId();
-        if (uid.isEmpty()) return null;
-        return db.collection("Users").document(uid).update(updates);
+        if (uid.isEmpty()) {
+            return Tasks.forException(new IllegalStateException("Chưa đăng nhập nên không thể cập nhật user"));
+        }
+        return db.collection("Users").document(uid).set(updates, SetOptions.merge());
     }
 
     private String getCurrentUserId() {
