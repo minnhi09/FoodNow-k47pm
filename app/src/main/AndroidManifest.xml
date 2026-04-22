@@ -29,6 +29,7 @@
         <activity
             android:name=".activities.ImageAdminActivity"
             android:exported="false" />
+        <activity android:name=".activities.StoreDetailActivity" />
     </application>
 
 </manifest>

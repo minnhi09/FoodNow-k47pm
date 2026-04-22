@@ -1,56 +1,56 @@
-# Huong dan A-Z cho nguoi moi: Ket noi Cloudinary + Firebase + Android (FoodNow)
+# Kết nối Cloudinary + Firebase + Android (FoodNow)
 
-> Muc tieu: sau tai lieu nay, ban hieu va tu lam duoc luong:
-> **chon anh tu dien thoai -> upload len Cloudinary -> lay URL -> luu URL vao Firestore -> hien thi lai tren app**.
+> **Mục tiêu:** Sau tài liệu này, bạn hiểu và tự làm được luồng:
+> **chọn ảnh từ điện thoại → upload lên Cloudinary → lấy URL → lưu URL vào Firestore → hiển thị lại trên app**.
 
----
+***
 
-## 1. Tong quan de hieu nhanh
+## 1. Tổng quan để hiểu nhanh
 
-Trong du an nay:
+Trong dự án này:
 
-1. **Cloudinary** chi dung de luu file anh.
-2. **Firebase Firestore** chi luu du lieu text/number, trong do co truong `imageUrl`.
-3. **Android app** la noi nguoi dung chon anh va goi 2 buoc tren.
+1. **Cloudinary** chỉ dùng để lưu file ảnh.
+2. **Firebase Firestore** chỉ lưu dữ liệu text/number, trong đó có trường `imageUrl`.
+3. **Android app** là nơi người dùng chọn ảnh và gọi 2 bước trên.
 
-Luong du lieu:
+Luồng dữ liệu:
 
-1. Nguoi dung chon anh trong app.
-2. App upload anh len Cloudinary (unsigned preset).
-3. Cloudinary tra ve `secure_url`.
-4. App ghi `secure_url` vao Firestore (`Users`, `Stores`, `Foods`).
-5. Glide load lai anh tu URL do de hien thi.
+1. Người dùng chọn ảnh trong app.
+2. App upload ảnh lên Cloudinary (unsigned preset).
+3. Cloudinary trả về `secure_url`.
+4. App ghi `secure_url` vào Firestore (`Users`, `Stores`, `Foods`).
+5. Glide load lại ảnh từ URL đó để hiển thị.
 
----
+***
 
-## 2. Chuan bi tai khoan va du an
+## 2. Chuẩn bị tài khoản và dự án
 
 ### 2.1 Firebase
 
-1. Tao Firebase project.
-2. Tao Android app voi package `com.example.foodnow`.
-3. Tai `google-services.json` dat vao thu muc `app/`.
-4. Bat **Authentication -> Email/Password**.
-5. Tao Firestore Database.
-6. Tao collection co ban: `Users`, `Stores`, `Foods`.
+1. Tạo Firebase project.
+2. Tạo Android app với package `com.example.foodnow`.
+3. Tải `google-services.json` đặt vào thư mục `app/`.
+4. Bật **Authentication → Email/Password**.
+5. Tạo Firestore Database.
+6. Tạo collection cơ bản: `Users`, `Stores`, `Foods`.
 
 ### 2.2 Cloudinary
 
-1. Tao tai khoan Cloudinary.
-2. Lay `Cloud Name` trong Dashboard.
-3. Vao **Settings -> Upload** tao Upload Preset.
-4. Preset phai bat **Unsigned**.
-5. Vi du preset: `foodnow_unsigned`.
+1. Tạo tài khoản Cloudinary.
+2. Lấy `Cloud Name` trong Dashboard.
+3. Vào **Settings → Upload** tạo Upload Preset.
+4. Preset phải bật **Unsigned**.
+5. Ví dụ preset: `foodnow_unsigned`.
 
-> Neu preset khong unsigned, upload tu app se that bai.
+> Nếu preset không phải unsigned, upload từ app sẽ thất bại.
 
----
+***
 
-## 3. Cau hinh Android project
+## 3. Cấu hình Android project
 
 ### 3.1 Dependency
 
-Trong `app/build.gradle.kts` can co:
+Trong `app/build.gradle.kts` cần có:
 
 ```kotlin
 implementation("com.cloudinary:cloudinary-android:3.0.2")
@@ -58,9 +58,10 @@ implementation("com.google.firebase:firebase-firestore")
 implementation("com.github.bumptech.glide:glide:4.16.0")
 ```
 
+
 ### 3.2 BuildConfig cho Cloudinary
 
-Trong `app/build.gradle.kts`, du an nay dang dung:
+Trong `app/build.gradle.kts`, dự án này đang dùng:
 
 ```kotlin
 buildFeatures {
@@ -68,41 +69,42 @@ buildFeatures {
 }
 ```
 
-va:
+và:
 
 ```kotlin
 buildConfigField("String", "CLOUDINARY_CLOUD_NAME", "\"$cloudinaryCloudName\"")
 buildConfigField("String", "CLOUDINARY_UPLOAD_PRESET", "\"$cloudinaryUploadPreset\"")
 ```
 
+
 ### 3.3 local.properties
 
-Trong `local.properties` (file local, khong commit), them:
+Trong `local.properties` (file local, không commit), thêm:
 
 ```properties
 cloudinary.cloud_name=dwtvqd3nu
 cloudinary.upload_preset=foodnow_unsigned
 ```
 
-Neu khong them, project hien tai van co fallback mac dinh trong Gradle.
+Nếu không thêm, project hiện tại vẫn có fallback mặc định trong Gradle.
 
----
+***
 
-## 4. CloudinaryHelper (lop dung chung)
+## 4. CloudinaryHelper (lớp dùng chung)
 
 File: `app/src/main/java/com/example/foodnow/utils/CloudinaryHelper.java`
 
-Nhiem vu:
+Nhiệm vụ:
 
-1. Khoi tao Cloudinary 1 lan (`init`).
-2. Upload anh tu `Uri`.
-3. Tra callback `onStart`, `onSuccess`, `onError`.
-4. Dinh nghia folder:
-   - `foodnow/profiles`
-   - `foodnow/stores`
-   - `foodnow/foods`
+1. Khởi tạo Cloudinary 1 lần (`init`).
+2. Upload ảnh từ `Uri`.
+3. Trả callback `onStart`, `onSuccess`, `onError`.
+4. Định nghĩa folder:
+    - `foodnow/profiles`
+    - `foodnow/stores`
+    - `foodnow/foods`
 
-Phan quan trong nhat voi unsigned preset:
+Phần quan trọng nhất với unsigned preset:
 
 ```java
 MediaManager.get()
@@ -111,51 +113,52 @@ MediaManager.get()
     .option("folder", targetFolder)
 ```
 
-> Neu dung sai kieu request, upload co the that bai du da nhap dung preset.
+> Nếu dùng sai kiểu request, upload có thể thất bại dù đã nhập đúng preset.
 
----
+***
 
-## 5. Firebase phan luu URL anh
+## 5. Firebase — phần lưu URL ảnh
 
 ### 5.1 Avatar user
 
-`ProfileFragment` upload thanh cong -> lay `secure_url` -> goi:
+`ProfileFragment` upload thành công → lấy `secure_url` → gọi:
 
 ```java
 updates.put("imageUrl", secureUrl);
 profileViewModel.updateUser(updates);
 ```
 
-### 5.2 Tranh loi `NOT_FOUND`
 
-Neu document `Users/{uid}` chua ton tai, `update(...)` se loi.
-Du an da sua trong `UserRepository`:
+### 5.2 Tránh lỗi `NOT_FOUND`
+
+Nếu document `Users/{uid}` chưa tồn tại, `update(...)` sẽ lỗi.
+Dự án đã sửa trong `UserRepository`:
 
 ```java
 set(updates, SetOptions.merge())
 ```
 
-Nhu vay:
+Như vậy:
 
-1. Chua co doc -> tu tao doc moi.
-2. Da co doc -> merge field, khong mat du lieu cu.
+1. Chưa có doc → tự tạo doc mới.
+2. Đã có doc → merge field, không mất dữ liệu cũ.
 
 ### 5.3 Store/Food
 
-Man hinh `ImageAdminActivity`:
+Màn hình `ImageAdminActivity`:
 
-1. Load danh sach tu `Stores` hoac `Foods`.
-2. Chon item.
-3. Upload len Cloudinary.
-4. Update `imageUrl` cho document da chon.
+1. Load danh sách từ `Stores` hoặc `Foods`.
+2. Chọn item.
+3. Upload lên Cloudinary.
+4. Update `imageUrl` cho document đã chọn.
 
----
+***
 
-## 6. Firestore Rules de test dung
+## 6. Firestore Rules để test đúng
 
-Vao Firebase Console -> Firestore -> Rules.
+Vào Firebase Console → Firestore → Rules.
 
-Mau rule de test theo app hien tai:
+Mẫu rule để test theo app hiện tại:
 
 ```javascript
 rules_version = '2';
@@ -178,42 +181,42 @@ service cloud.firestore {
 }
 ```
 
-> Neu khong dung rule phu hop, ban se gap `PERMISSION_DENIED`.
+> Nếu không dùng rule phù hợp, bạn sẽ gặp `PERMISSION_DENIED`.
 
----
+***
 
-## 7. Quy trinh test A-Z tren may that
+## 7. Quy trình test A-Z trên máy thật
 
 ### Test avatar
 
-1. Dang nhap app.
-2. Vao tab **Tai khoan**.
-3. Bam **Doi anh dai dien**.
-4. Chon anh trong gallery.
-5. Kiem tra:
-   - Toast thanh cong.
-   - Avatar doi ngay tren UI.
-   - Firestore `Users/{uid}.imageUrl` co URL moi.
-   - Cloudinary Media Library co anh trong `foodnow/profiles`.
+1. Đăng nhập app.
+2. Vào tab **Tài khoản**.
+3. Bấm **Đổi ảnh đại diện**.
+4. Chọn ảnh trong gallery.
+5. Kiểm tra:
+    - Toast thành công.
+    - Avatar đổi ngay trên UI.
+    - Firestore `Users/{uid}.imageUrl` có URL mới.
+    - Cloudinary Media Library có ảnh trong `foodnow/profiles`.
 
 ### Test Store/Food
 
-1. Vao **Tai khoan** -> **Quan tri anh Store/Food**.
-2. Chon loai `Store` hoac `Food`.
-3. Chon item can cap nhat.
-4. Chon anh.
-5. Bam upload.
-6. Kiem tra Firestore (`Stores`/`Foods`) va Cloudinary folder tuong ung.
+1. Vào **Tài khoản** → **Quản trị ảnh Store/Food**.
+2. Chọn loại `Store` hoặc `Food`.
+3. Chọn item cần cập nhật.
+4. Chọn ảnh.
+5. Bấm upload.
+6. Kiểm tra Firestore (`Stores`/`Foods`) và Cloudinary folder tương ứng.
 
----
+***
 
-## 8. Cac loi hay gap va cach xu ly
+## 8. Các lỗi hay gặp và cách xử lý
 
-### Loi 1: `defaultConfig contains custom BuildConfig fields, but the feature is disabled`
+### Lỗi 1: `defaultConfig contains custom BuildConfig fields, but the feature is disabled`
 
-Nguyen nhan: dung `buildConfigField(...)` nhung tat buildConfig generation.
+Nguyên nhân: dùng `buildConfigField(...)` nhưng tắt buildConfig generation.
 
-Cach sua:
+Cách sửa:
 
 ```kotlin
 buildFeatures {
@@ -221,45 +224,45 @@ buildFeatures {
 }
 ```
 
-### Loi 2: `PERMISSION_DENIED`
 
-Nguyen nhan: Firestore Rules chua cho phep user hien tai ghi vao document.
+### Lỗi 2: `PERMISSION_DENIED`
 
-Cach sua: cap nhat Rules dung voi luong app.
+Nguyên nhân: Firestore Rules chưa cho phép user hiện tại ghi vào document.
 
-### Loi 3: `NOT_FOUND: No document to update`
+Cách sửa: cập nhật Rules đúng với luồng app.
 
-Nguyen nhan: document chua ton tai ma dung `.update(...)`.
+### Lỗi 3: `NOT_FOUND: No document to update`
 
-Cach sua: dung `.set(data, SetOptions.merge())`.
+Nguyên nhân: document chưa tồn tại mà dùng `.update(...)`.
 
-### Loi 4: Upload fail tu Cloudinary
+Cách sửa: dùng `.set(data, SetOptions.merge())`.
 
-Kiem tra:
+### Lỗi 4: Upload fail từ Cloudinary
 
-1. Preset co bat **Unsigned** chua.
-2. Ten preset co dung exact text chua.
-3. Cloud name dung chua.
-4. App dang goi `.unsigned(UPLOAD_PRESET)` chua.
+Kiểm tra:
 
----
+1. Preset có bật **Unsigned** chưa.
+2. Tên preset có đúng exact text chưa.
+3. Cloud name đúng chưa.
+4. App đang gọi `.unsigned(UPLOAD_PRESET)` chưa.
 
-## 9. Best practice bao mat (quan trong)
+***
 
-1. Khong hardcode secret trong app.
-2. Android app chi nen dung unsigned upload hoac upload qua backend cua ban.
-3. Restrict unsigned preset (folder, format, kich thuoc, rate limit) trong Cloudinary.
-4. Voi production nghiem tuc, uu tien luong **signed upload qua server**.
-5. Firestore Rules phai theo role (user/admin), khong de write mo rong lau dai.
+## 9. Best practice bảo mật (quan trọng)
 
----
+1. Không hardcode secret trong app.
+2. Android app chỉ nên dùng unsigned upload hoặc upload qua backend của bạn.
+3. Restrict unsigned preset (folder, format, kích thước, rate limit) trong Cloudinary.
+4. Với production nghiêm túc, ưu tiên luồng **signed upload qua server**.
+5. Firestore Rules phải theo role (user/admin), không để write mở rộng lâu dài.
 
-## 10. Checklist nhanh de xac nhan "da ket noi thanh cong"
+***
 
-1. App upload anh khong bao loi.
-2. Cloudinary co file moi.
-3. Firestore co `imageUrl` moi.
-4. App load duoc anh tu URL do sau khi mo lai man hinh.
+## 10. Checklist nhanh để xác nhận "đã kết nối thành công"
 
-Neu ca 4 dieu tren dung, ban da ket noi Cloudinary + Firebase + Android thanh cong.
+1. App upload ảnh không báo lỗi.
+2. Cloudinary có file mới.
+3. Firestore có `imageUrl` mới.
+4. App load được ảnh từ URL đó sau khi mở lại màn hình.
 
+Nếu cả 4 điều trên đúng, bạn đã kết nối Cloudinary + Firebase + Android thành công.

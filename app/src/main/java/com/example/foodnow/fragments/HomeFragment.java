@@ -1,5 +1,6 @@
 package com.example.foodnow.fragments;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -15,6 +16,7 @@ import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.foodnow.activities.StoreDetailActivity;
 import com.example.foodnow.R;
 import com.example.foodnow.adapters.CategoryAdapter;
 import com.example.foodnow.adapters.RecommendedFoodAdapter;
@@ -103,10 +105,15 @@ public class HomeFragment extends Fragment {
                 requireContext(),
                 storeList,
                 store -> {
-                    // Xử lý click quán ăn — tạm thời Toast để test
-                    Toast.makeText(requireContext(),
-                            "Quán: " + store.getName(),
-                            Toast.LENGTH_SHORT).show();
+                    // Mở màn hình chi tiết quán ăn
+                    Intent intent = new Intent(requireContext(), StoreDetailActivity.class);
+                    intent.putExtra("storeId", store.getId());
+                    intent.putExtra("storeName", store.getName());
+                    intent.putExtra("storeImage", store.getImageUrl());
+                    intent.putExtra("storeRating", store.getRating());
+                    intent.putExtra("storeDeliveryTime", store.getDeliveryTime());
+                    intent.putExtra("storeDeliveryFee", store.getDeliveryFee());
+                    startActivity(intent);
                 }
         );
         rvStores.setLayoutManager(
