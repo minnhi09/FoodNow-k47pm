@@ -25,17 +25,28 @@ public class FoodAdapter extends RecyclerView.Adapter<FoodAdapter.ViewHolder> {
         void onAddToCart(Food food);
     }
 
+    // ② Interface xử lý click vào card món ăn → mở FoodDetailActivity
+    public interface OnFoodClickListener {
+        void onFoodClick(Food food);
+    }
+
     private final Context context;
     private final List<Food> foodList;
-    private final OnAddToCartListener listener;
+    private final OnAddToCartListener cartListener;
+    private OnFoodClickListener foodClickListener;
     private final NumberFormat currencyFormatter;
 
-    // ② Constructor
-    public FoodAdapter(Context context, List<Food> foodList, OnAddToCartListener listener) {
+    // Constructor cũ (backward-compatible)
+    public FoodAdapter(Context context, List<Food> foodList, OnAddToCartListener cartListener) {
         this.context = context;
         this.foodList = foodList;
-        this.listener = listener;
+        this.cartListener = cartListener;
         this.currencyFormatter = NumberFormat.getInstance(new Locale("vi", "VN"));
+    }
+
+    /** Gán listener click card để mở chi tiết món */
+    public void setOnFoodClickListener(OnFoodClickListener listener) {
+        this.foodClickListener = listener;
     }
 
     // ③ Inflate layout item_food.xml
@@ -63,10 +74,15 @@ public class FoodAdapter extends RecyclerView.Adapter<FoodAdapter.ViewHolder> {
                 .placeholder(R.drawable.ic_launcher_background)
                 .into(holder.imgFood);
 
+        // Click toàn bộ card → mở FoodDetailActivity
+        holder.itemView.setOnClickListener(v -> {
+            if (foodClickListener != null) foodClickListener.onFoodClick(food);
+        });
+
         // Xử lý click nút thêm vào giỏ
         holder.btnAddCart.setOnClickListener(v -> {
-            if (listener != null) {
-                listener.onAddToCart(food);
+            if (cartListener != null) {
+                cartListener.onAddToCart(food);
             }
         });
     }

@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="10dp"
+    app:cardBackgroundColor="@color/white"
+    app:cardCornerRadius="16dp"
+    app:cardElevation="0dp"
+    app:strokeColor="@color/home_border"
+    app:strokeWidth="1dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="14dp">
+
+        <!-- Hàng trên: avatar + tên + thời gian -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <!-- Avatar placeholder tròn -->
+            <FrameLayout
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:background="@drawable/bg_home_category_icon">
+
+                <ImageView
+                    android:layout_width="22dp"
+                    android:layout_height="22dp"
+                    android:layout_gravity="center"
+                    android:src="@android:drawable/ic_menu_myplaces"
+                    app:tint="@color/home_primary_orange" />
+            </FrameLayout>
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="10dp"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/tv_reviewer_name"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Nguyễn Văn A"
+                    android:textColor="@color/home_text_primary"
+                    android:textSize="15sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tv_review_time"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:text="2 ngày trước"
+                    android:textColor="@color/home_text_secondary"
+                    android:textSize="13sp" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- Hàng sao đánh giá -->
+        <LinearLayout
+            android:id="@+id/layout_review_stars"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:orientation="horizontal">
+
+            <ImageView android:id="@+id/star1"
+                android:layout_width="18dp" android:layout_height="18dp"
+                android:src="@android:drawable/btn_star_big_on"
+                app:tint="@color/home_primary_orange" />
+            <ImageView android:id="@+id/star2"
+                android:layout_width="18dp" android:layout_height="18dp"
+                android:src="@android:drawable/btn_star_big_on"
+                android:layout_marginStart="2dp"
+                app:tint="@color/home_primary_orange" />
+            <ImageView android:id="@+id/star3"
+                android:layout_width="18dp" android:layout_height="18dp"
+                android:src="@android:drawable/btn_star_big_on"
+                android:layout_marginStart="2dp"
+                app:tint="@color/home_primary_orange" />
+            <ImageView android:id="@+id/star4"
+                android:layout_width="18dp" android:layout_height="18dp"
+                android:src="@android:drawable/btn_star_big_on"
+                android:layout_marginStart="2dp"
+                app:tint="@color/home_primary_orange" />
+            <ImageView android:id="@+id/star5"
+                android:layout_width="18dp" android:layout_height="18dp"
+                android:src="@android:drawable/btn_star_big_on"
+                android:layout_marginStart="2dp"
+                app:tint="@color/home_primary_orange" />
+        </LinearLayout>
+
+        <!-- Nội dung comment -->
+        <TextView
+            android:id="@+id/tv_review_comment"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="Món ăn rất ngon, phục vụ nhanh chóng."
+            android:textColor="@color/home_text_primary"
+            android:textSize="14sp"
+            android:lineSpacingExtra="2dp" />
+
+        <!-- Lượt thích -->
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <ImageView
+                android:layout_width="16dp"
+                android:layout_height="16dp"
+                android:src="@android:drawable/ic_menu_share"
+                app:tint="@color/home_primary_orange" />
+
+            <TextView
+                android:id="@+id/tv_review_likes"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="4dp"
+                android:text="12 thích"
+                android:textColor="@color/home_text_secondary"
+                android:textSize="13sp" />
+        </LinearLayout>
+
+    </LinearLayout>
+
+</com.google.android.material.card.MaterialCardView>

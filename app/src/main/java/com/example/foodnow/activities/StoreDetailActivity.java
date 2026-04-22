@@ -1,5 +1,6 @@
 package com.example.foodnow.activities;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -77,6 +78,25 @@ public class StoreDetailActivity extends AppCompatActivity {
                     "Đã thêm: " + food.getTitle(),
                     Toast.LENGTH_SHORT).show();
         });
+
+        // Click vào card món → mở FoodDetailActivity
+        final String finalStoreName = storeName;
+        final String finalStoreTime = storeTime;
+        final long finalDeliveryFee = storeDeliveryFee;
+        foodAdapter.setOnFoodClickListener(food -> {
+            Intent intent = new Intent(this, FoodDetailActivity.class);
+            intent.putExtra("foodId",          food.getId());
+            intent.putExtra("foodTitle",        food.getTitle());
+            intent.putExtra("foodDescription",  food.getDescription());
+            intent.putExtra("foodPrice",        food.getPrice());
+            intent.putExtra("foodImageUrl",     food.getImageUrl());
+            intent.putExtra("foodRating",       food.getRating());
+            intent.putExtra("storeName",        finalStoreName);
+            intent.putExtra("storeDeliveryTime",finalStoreTime);
+            intent.putExtra("storeDeliveryFee", finalDeliveryFee);
+            startActivity(intent);
+        });
+
         rvFoods.setLayoutManager(new LinearLayoutManager(this));
         rvFoods.setAdapter(foodAdapter);
 
