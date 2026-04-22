@@ -50,9 +50,12 @@ public class HomeFragment extends Fragment {
     private RecommendedFoodAdapter recommendedFoodAdapter;
 
     // allStoreList: danh sách đầy đủ từ Firestore, không bao giờ bị xóa
-    // storeList: danh sách đang hiển thị (có thể bị lọc theo từ khóa)
+    // storeList: danh sách đang hiển thị (có thể bị lọc theo từ khóa + danh mục)
     private final List<Store> allStoreList = new ArrayList<>();
     private final List<Store> storeList = new ArrayList<>();
+
+    // ID danh mục đang chọn; "" = "Tất cả" (không lọc)
+    private String selectedCategoryId = "";
 
     private final List<Category> categoryList = new ArrayList<>();
     private final List<RecommendedFood> recommendedFoodList = new ArrayList<>();
@@ -117,25 +120,28 @@ public class HomeFragment extends Fragment {
     }
 
     /**
-     * Lọc danh sách quán ăn theo từ khóa.
-     * Tìm kiếm trong: tên quán (name) + mô tả (description).
-     * Nếu query rỗng → hiển thị tất cả.
+     * Lọc danh sách quán ăn theo TỪ KHÓA và DANH MỤC (kết hợp cùng lúc).
+     * - query rỗng + categoryId rỗng → hiển thị tất cả
+     * - Chỉ query → lọc theo tên/mô tả
+     * - Chỉ category → lọc theo categoryId của store
+     * - Cả hai → phải thỏa mãn cả hai điều kiện (AND)
      */
     private void filterStores(String query) {
         storeList.clear();
+        String lower = query.toLowerCase();
 
-        if (query.isEmpty()) {
-            storeList.addAll(allStoreList);
-        } else {
-            String lower = query.toLowerCase();
-            for (Store store : allStoreList) {
-                boolean nameMatch = store.getName() != null
-                        && store.getName().toLowerCase().contains(lower);
-                boolean descMatch = store.getDescription() != null
-                        && store.getDescription().toLowerCase().contains(lower);
-                if (nameMatch || descMatch) {
-                    storeList.add(store);
-                }
+        for (Store store : allStoreList) {
+            // Điều kiện 1: lọc theo danh mục
+            boolean categoryMatch = selectedCategoryId.isEmpty()
+                    || selectedCategoryId.equals(store.getCategoryId());
+
+            // Điều kiện 2: lọc theo từ khóa tìm kiếm
+            boolean searchMatch = query.isEmpty()
+                    || (store.getName() != null && store.getName().toLowerCase().contains(lower))
+                    || (store.getDescription() != null && store.getDescription().toLowerCase().contains(lower));
+
+            if (categoryMatch && searchMatch) {
+                storeList.add(store);
             }
         }
 
@@ -152,10 +158,17 @@ public class HomeFragment extends Fragment {
                 requireContext(),
                 categoryList,
                 category -> {
-                    // Xử lý click danh mục — tạm thời Toast để test
-                    Toast.makeText(requireContext(),
-                            "Danh mục: " + category.getName(),
-                            Toast.LENGTH_SHORT).show();
+                    String clickedId = category.getId();
+                    // Click "Tất cả" HOẶC click lại chip đang chọn → bỏ lọc
+                    if ("all".equals(clickedId) || clickedId.equals(selectedCategoryId)) {
+                        selectedCategoryId = "";
+                    } else {
+                        selectedCategoryId = clickedId;
+                    }
+                    // Cập nhật visual trên chip
+                    categoryAdapter.setSelectedCategory(selectedCategoryId);
+                    // Áp lại filter (giữ nguyên từ khóa search hiện tại)
+                    filterStores(etSearch.getText().toString().trim());
                 }
         );
         rvCategories.setLayoutManager(
@@ -271,20 +284,21 @@ public class HomeFragment extends Fragment {
 
     private void addMockStores() {
         allStoreList.add(buildStore("Phở Hà Nội", "Việt Nam", 4.8f, "20-30 phút",
-                "https://images.unsplash.com/photo-1544025162-d76694265947"));
+                "https://images.unsplash.com/photo-1544025162-d76694265947", "pho"));
         allStoreList.add(buildStore("Bánh Mì Sài Gòn", "Việt Nam", 4.6f, "15-25 phút",
-                "https://images.unsplash.com/photo-1481070414801-51fd732d7184"));
+                "https://images.unsplash.com/photo-1481070414801-51fd732d7184", "banh-mi"));
         allStoreList.add(buildStore("Trà Sữa Đài Loan", "Đồ uống", 4.9f, "10-20 phút",
-                "https://images.unsplash.com/photo-1558857563-c0c74f00b5f1"));
+                "https://images.unsplash.com/photo-1558857563-c0c74f00b5f1", "dessert"));
     }
 
-    private Store buildStore(String name, String address, float rating, String time, String imageUrl) {
+    private Store buildStore(String name, String address, float rating, String time, String imageUrl, String categoryId) {
         Store store = new Store();
         store.setName(name);
         store.setAddress(address);
         store.setRating(rating);
         store.setDeliveryTime(time);
         store.setImageUrl(imageUrl);
+        store.setCategoryId(categoryId);
         return store;
     }
 }
