@@ -4,6 +4,7 @@ import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -22,6 +23,9 @@ public class CategoryAdapter extends RecyclerView.Adapter<CategoryAdapter.Catego
     private final List<Category> categoryList;
     private final OnCategoryClickListener listener;
 
+    // ID của danh mục đang được chọn, "" = không chọn gì (Tất cả)
+    private String selectedCategoryId = "";
+
     public interface OnCategoryClickListener {
         void onCategoryClick(Category category);
     }
@@ -30,6 +34,12 @@ public class CategoryAdapter extends RecyclerView.Adapter<CategoryAdapter.Catego
         this.context = context;
         this.categoryList = categoryList;
         this.listener = listener;
+    }
+
+    /** Cập nhật danh mục đang chọn và refresh giao diện */
+    public void setSelectedCategory(String categoryId) {
+        this.selectedCategoryId = categoryId == null ? "" : categoryId;
+        notifyDataSetChanged();
     }
 
     @NonNull
@@ -45,7 +55,23 @@ public class CategoryAdapter extends RecyclerView.Adapter<CategoryAdapter.Catego
         Category category = categoryList.get(position);
         holder.tvName.setText(category.getName());
         holder.imgCategory.setImageResource(getCategoryIconRes(category.getName()));
-        holder.imgCategory.setColorFilter(context.getColor(R.color.home_primary_orange));
+
+        // Kiểm tra chip này có đang được chọn không
+        boolean isSelected = category.getId() != null
+                && category.getId().equals(selectedCategoryId);
+
+        // Đổi màu nền icon: cam đậm khi chọn, cam nhạt khi không chọn
+        holder.iconContainer.setBackgroundResource(
+                isSelected ? R.drawable.bg_home_category_icon_selected
+                           : R.drawable.bg_home_category_icon);
+
+        // Đổi màu icon: trắng khi chọn, cam khi không chọn
+        holder.imgCategory.setColorFilter(context.getColor(
+                isSelected ? R.color.white : R.color.home_primary_orange));
+
+        // Đổi màu chữ: cam khi chọn, đen khi không chọn
+        holder.tvName.setTextColor(context.getColor(
+                isSelected ? R.color.home_primary_orange : R.color.home_text_primary));
 
         holder.itemView.setOnClickListener(v -> {
             if (listener != null) listener.onCategoryClick(category);
@@ -58,11 +84,13 @@ public class CategoryAdapter extends RecyclerView.Adapter<CategoryAdapter.Catego
     }
 
     public static class CategoryViewHolder extends RecyclerView.ViewHolder {
+        FrameLayout iconContainer;
         ImageView imgCategory;
         TextView tvName;
 
         public CategoryViewHolder(@NonNull View itemView) {
             super(itemView);
+            iconContainer = itemView.findViewById(R.id.frame_category_icon);
             imgCategory = itemView.findViewById(R.id.img_category);
             tvName      = itemView.findViewById(R.id.tv_category_name);
         }

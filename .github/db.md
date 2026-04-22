@@ -51,6 +51,7 @@ Stores/
     deliveryTime : "15 phút"
     deliveryFee  : 15000
     isOpen       : true
+    categoryId   : "cat001"      ← liên kết với Categories (id của danh mục)
 ```
 
 

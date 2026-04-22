@@ -2,10 +2,14 @@ package com.example.foodnow.fragments;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -34,6 +38,8 @@ public class HomeFragment extends Fragment {
     // ── Khai báo biến ────────────────────────────────────
     private HomeViewModel homeViewModel;
 
+    private EditText etSearch;
+    private TextView tvNoResults;
     private RecyclerView rvCategories;
     private RecyclerView rvStores;
     private RecyclerView rvRecommendedFoods;
@@ -43,8 +49,12 @@ public class HomeFragment extends Fragment {
     private StoreAdapter storeAdapter;
     private RecommendedFoodAdapter recommendedFoodAdapter;
 
-    private final List<Category> categoryList = new ArrayList<>();
+    // allStoreList: danh sách đầy đủ từ Firestore, không bao giờ bị xóa
+    // storeList: danh sách đang hiển thị (có thể bị lọc theo từ khóa)
+    private final List<Store> allStoreList = new ArrayList<>();
     private final List<Store> storeList = new ArrayList<>();
+
+    private final List<Category> categoryList = new ArrayList<>();
     private final List<RecommendedFood> recommendedFoodList = new ArrayList<>();
 
     @Nullable
@@ -60,27 +70,82 @@ public class HomeFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
 
         // ① Ánh xạ view
-        rvCategories = view.findViewById(R.id.rv_categories);
-        rvStores = view.findViewById(R.id.rv_stores);
+        etSearch        = view.findViewById(R.id.et_search);
+        tvNoResults     = view.findViewById(R.id.tv_no_results);
+        rvCategories    = view.findViewById(R.id.rv_categories);
+        rvStores        = view.findViewById(R.id.rv_stores);
         rvRecommendedFoods = view.findViewById(R.id.rv_recommended_foods);
-        ivHeaderCart = view.findViewById(R.id.iv_header_cart);
+        ivHeaderCart    = view.findViewById(R.id.iv_header_cart);
 
         // ② Khởi tạo ViewModel
         homeViewModel = new ViewModelProvider(this).get(HomeViewModel.class);
 
-        // ③ Setup dữ liệu mock + RecyclerView
+        // ③ Setup RecyclerViews + dữ liệu mock
         seedMockRecommendedFoods();
         setupCategoryRecyclerView();
         setupStoreRecyclerView();
         setupRecommendedRecyclerView();
 
-        // ④ Observe data từ ViewModel
+        // ④ Setup search
+        setupSearch();
+
+        // ⑤ Observe data từ Firestore
         observeData();
 
-        // ⑤ Action click nhanh
+        // ⑥ Action click nhanh
         ivHeaderCart.setOnClickListener(v ->
                 Toast.makeText(requireContext(), "Mở giỏ hàng", Toast.LENGTH_SHORT).show());
     }
+
+    // ═══════════════════════════════════════════════════════
+    // SEARCH
+    // ═══════════════════════════════════════════════════════
+
+    private void setupSearch() {
+        etSearch.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                filterStores(s.toString().trim());
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {}
+        });
+    }
+
+    /**
+     * Lọc danh sách quán ăn theo từ khóa.
+     * Tìm kiếm trong: tên quán (name) + mô tả (description).
+     * Nếu query rỗng → hiển thị tất cả.
+     */
+    private void filterStores(String query) {
+        storeList.clear();
+
+        if (query.isEmpty()) {
+            storeList.addAll(allStoreList);
+        } else {
+            String lower = query.toLowerCase();
+            for (Store store : allStoreList) {
+                boolean nameMatch = store.getName() != null
+                        && store.getName().toLowerCase().contains(lower);
+                boolean descMatch = store.getDescription() != null
+                        && store.getDescription().toLowerCase().contains(lower);
+                if (nameMatch || descMatch) {
+                    storeList.add(store);
+                }
+            }
+        }
+
+        storeAdapter.notifyDataSetChanged();
+        tvNoResults.setVisibility(storeList.isEmpty() ? View.VISIBLE : View.GONE);
+    }
+
+    // ═══════════════════════════════════════════════════════
+    // RECYCLERVIEW SETUP
+    // ═══════════════════════════════════════════════════════
 
     private void setupCategoryRecyclerView() {
         categoryAdapter = new CategoryAdapter(
@@ -116,9 +181,7 @@ public class HomeFragment extends Fragment {
                     startActivity(intent);
                 }
         );
-        rvStores.setLayoutManager(
-                new LinearLayoutManager(requireContext())
-        );
+        rvStores.setLayoutManager(new LinearLayoutManager(requireContext()));
         rvStores.setAdapter(storeAdapter);
     }
 
@@ -133,6 +196,10 @@ public class HomeFragment extends Fragment {
         rvRecommendedFoods.setLayoutManager(new GridLayoutManager(requireContext(), 2));
         rvRecommendedFoods.setAdapter(recommendedFoodAdapter);
     }
+
+    // ═══════════════════════════════════════════════════════
+    // OBSERVE DATA
+    // ═══════════════════════════════════════════════════════
 
     private void observeData() {
         // Observe danh mục
@@ -149,17 +216,22 @@ public class HomeFragment extends Fragment {
             categoryAdapter.notifyDataSetChanged();
         });
 
-        // Observe quán ăn
+        // Observe quán ăn — lưu vào allStoreList, rồi áp filter hiện tại
         homeViewModel.getStores().observe(getViewLifecycleOwner(), stores -> {
-            storeList.clear();
+            allStoreList.clear();
             if (stores != null && !stores.isEmpty()) {
-                storeList.addAll(stores);
+                allStoreList.addAll(stores);
             } else {
                 addMockStores();
             }
-            storeAdapter.notifyDataSetChanged();
+            // Áp lại từ khóa đang nhập (nếu có)
+            filterStores(etSearch.getText().toString().trim());
         });
     }
+
+    // ═══════════════════════════════════════════════════════
+    // DỮ LIỆU MẪU (dùng khi Firestore trống)
+    // ═══════════════════════════════════════════════════════
 
     private void seedMockRecommendedFoods() {
         recommendedFoodList.clear();
@@ -198,11 +270,11 @@ public class HomeFragment extends Fragment {
     }
 
     private void addMockStores() {
-        storeList.add(buildStore("Phở Hà Nội", "Việt Nam", 4.8f, "20-30 phút",
+        allStoreList.add(buildStore("Phở Hà Nội", "Việt Nam", 4.8f, "20-30 phút",
                 "https://images.unsplash.com/photo-1544025162-d76694265947"));
-        storeList.add(buildStore("Bánh Mì Sài Gòn", "Việt Nam", 4.6f, "15-25 phút",
+        allStoreList.add(buildStore("Bánh Mì Sài Gòn", "Việt Nam", 4.6f, "15-25 phút",
                 "https://images.unsplash.com/photo-1481070414801-51fd732d7184"));
-        storeList.add(buildStore("Trà Sữa Đài Loan", "Đồ uống", 4.9f, "10-20 phút",
+        allStoreList.add(buildStore("Trà Sữa Đài Loan", "Đồ uống", 4.9f, "10-20 phút",
                 "https://images.unsplash.com/photo-1558857563-c0c74f00b5f1"));
     }
 

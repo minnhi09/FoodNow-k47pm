@@ -12,6 +12,7 @@ public class Store {
     private long deliveryFee;
     private boolean isOpen;
     private String storeOwnerId;
+    private String categoryId;
     public Store() {}
     public Store(String id, String name, String description, String address, String phone, String imageUrl, float rating, String deliveryTime, long deliveryFee, boolean isOpen, String storeOwnerId) {
         this.id = id;
@@ -96,6 +97,12 @@ public class Store {
     }
     public void setStoreOwnerId(String storeOwnerId) {
         this.storeOwnerId = storeOwnerId;
+    }
+    public String getCategoryId() {
+        return categoryId;
+    }
+    public void setCategoryId(String categoryId) {
+        this.categoryId = categoryId;
     }
 
 }

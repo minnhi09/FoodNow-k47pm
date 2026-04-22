@@ -126,13 +126,21 @@
                     android:src="@drawable/ic_home_search"
                     app:tint="@color/home_search_hint" />
 
-                <TextView
-                    android:layout_width="wrap_content"
+                <EditText
+                    android:id="@+id/et_search"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
+                    android:layout_weight="1"
                     android:layout_marginStart="10dp"
-                    android:text="Tìm món ăn, quán ăn..."
-                    android:textColor="@color/home_search_hint"
-                    android:textSize="18sp" />
+                    android:background="@null"
+                    android:hint="Tìm món ăn, quán ăn..."
+                    android:textColorHint="@color/home_search_hint"
+                    android:textColor="@color/home_text_primary"
+                    android:textSize="18sp"
+                    android:singleLine="true"
+                    android:maxLines="1"
+                    android:imeOptions="actionSearch"
+                    android:inputType="text" />
             </LinearLayout>
         </LinearLayout>
 
@@ -262,6 +270,19 @@
             android:clipToPadding="false"
             android:nestedScrollingEnabled="false"
             android:paddingBottom="4dp" />
+
+        <TextView
+            android:id="@+id/tv_no_results"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:layout_marginTop="24dp"
+            android:layout_marginEnd="16dp"
+            android:gravity="center"
+            android:text="Không tìm thấy quán ăn phù hợp 🍽️"
+            android:textColor="@color/home_text_secondary"
+            android:textSize="16sp"
+            android:visibility="gone" />
 
         <LinearLayout
             android:layout_width="match_parent"

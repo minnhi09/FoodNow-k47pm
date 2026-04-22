@@ -8,6 +8,7 @@
     android:orientation="vertical">
 
     <FrameLayout
+        android:id="@+id/frame_category_icon"
         android:layout_width="64dp"
         android:layout_height="64dp"
         android:background="@drawable/bg_home_category_icon">
