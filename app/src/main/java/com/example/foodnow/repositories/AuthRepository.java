@@ -36,6 +36,7 @@ public class AuthRepository {
                         userData.put("phone", phone);
                         userData.put("address", "");
                         userData.put("imageUrl", "");
+                        userData.put("role", "customer");
                         userData.put("createdAt", com.google.firebase.Timestamp.now());
 
                         db.collection("Users")

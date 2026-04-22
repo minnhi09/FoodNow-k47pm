@@ -30,6 +30,7 @@ Users/
     phone        : "0901234567"
     address      : "123 Trần Phú, Đà Lạt"
     imageUrl     : "https://..."
+    role         : "customer"     ← "customer" (mặc định) hoặc "admin"
     createdAt    : Timestamp
 ```
 

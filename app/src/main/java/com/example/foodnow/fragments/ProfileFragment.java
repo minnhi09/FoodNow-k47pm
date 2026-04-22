@@ -84,6 +84,10 @@ public class ProfileFragment extends Fragment {
             etPhone.setText(user.getPhone());
             etAddress.setText(user.getAddress());
 
+            // Chỉ admin mới thấy nút Quản trị
+            boolean isAdmin = "admin".equals(user.getRole());
+            btnManageImages.setVisibility(isAdmin ? View.VISIBLE : View.GONE);
+
             if (user.getImageUrl() != null && !user.getImageUrl().isEmpty()) {
                 Glide.with(requireContext()).load(user.getImageUrl())
                         .placeholder(R.mipmap.ic_launcher).into(imgAvatar);

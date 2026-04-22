@@ -10,6 +10,7 @@ public class User {
     private String phone;
     private String address;
     private String imageUrl;
+    private String role; // "customer" (mặc định) hoặc "admin"
     private Timestamp createdAt;
 
     // Constructor rỗng — bắt buộc cho Firestore
@@ -32,6 +33,7 @@ public class User {
     public String    getPhone()     { return phone; }
     public String    getAddress()   { return address; }
     public String    getImageUrl()  { return imageUrl; }
+    public String    getRole()      { return role; }
     public Timestamp getCreatedAt() { return createdAt; }
 
     // Setter
@@ -41,5 +43,6 @@ public class User {
     public void setPhone(String phone)        { this.phone = phone; }
     public void setAddress(String address)    { this.address = address; }
     public void setImageUrl(String imageUrl)  { this.imageUrl = imageUrl; }
+    public void setRole(String role)          { this.role = role; }
     public void setCreatedAt(Timestamp createdAt) { this.createdAt = createdAt; }
 }

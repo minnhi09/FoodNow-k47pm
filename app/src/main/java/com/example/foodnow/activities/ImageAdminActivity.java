@@ -76,12 +76,60 @@ public class ImageAdminActivity extends AppCompatActivity {
             refreshUiState();
         });
 
-        setupTargetTypeSpinner();
-        setupTargetItemSpinner();
+        checkAdminAndInit();
+    }
 
-        btnChooseImage.setOnClickListener(v -> pickImageLauncher.launch("image/*"));
-        btnUploadImage.setOnClickListener(v -> uploadSelectedImage());
-        btnReloadTargets.setOnClickListener(v -> loadTargetsForType(getCurrentType()));
+    /** Kiểm tra quyền admin từ Firestore trước khi cho phép dùng màn hình */
+    private void checkAdminAndInit() {
+        String uid = com.google.firebase.auth.FirebaseAuth.getInstance().getCurrentUser() != null
+                ? com.google.firebase.auth.FirebaseAuth.getInstance().getCurrentUser().getUid()
+                : null;
+
+        if (uid == null) {
+            Toast.makeText(this, "Bạn chưa đăng nhập", Toast.LENGTH_SHORT).show();
+            finish();
+            return;
+        }
+
+        // Disable UI trong khi kiểm tra
+        setAllActionsEnabled(false);
+        progressBar.setVisibility(View.VISIBLE);
+
+        db.collection("Users").document(uid).get()
+                .addOnSuccessListener(snapshot -> {
+                    progressBar.setVisibility(View.GONE);
+                    if (!snapshot.exists()) {
+                        Toast.makeText(this, "Không tìm thấy tài khoản", Toast.LENGTH_SHORT).show();
+                        finish();
+                        return;
+                    }
+                    String role = snapshot.getString("role");
+                    if (!"admin".equals(role)) {
+                        Toast.makeText(this, "Bạn không có quyền truy cập", Toast.LENGTH_SHORT).show();
+                        finish();
+                        return;
+                    }
+                    // Qua kiểm tra → khởi tạo bình thường
+                    setAllActionsEnabled(true);
+                    setupTargetTypeSpinner();
+                    setupTargetItemSpinner();
+                    btnChooseImage.setOnClickListener(v -> pickImageLauncher.launch("image/*"));
+                    btnUploadImage.setOnClickListener(v -> uploadSelectedImage());
+                    btnReloadTargets.setOnClickListener(v -> loadTargetsForType(getCurrentType()));
+                })
+                .addOnFailureListener(e -> {
+                    progressBar.setVisibility(View.GONE);
+                    Toast.makeText(this, "Kiểm tra quyền thất bại: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                    finish();
+                });
+    }
+
+    private void setAllActionsEnabled(boolean enabled) {
+        spTargetType.setEnabled(enabled);
+        spTargetItem.setEnabled(enabled);
+        btnChooseImage.setEnabled(enabled);
+        btnUploadImage.setEnabled(enabled);
+        btnReloadTargets.setEnabled(enabled);
     }
 
     private void setupTargetTypeSpinner() {
