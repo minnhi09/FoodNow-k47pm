@@ -48,6 +48,28 @@ public class FoodRepository {
         return liveData;
     }
 
+    /** Top 6 món có rating cao nhất (cross-store), không cần composite Firestore index */
+    public LiveData<List<Food>> getTopRatedFoods() {
+        MutableLiveData<List<Food>> liveData = new MutableLiveData<>();
+        db.collection("Foods")
+                .orderBy("rating", com.google.firebase.firestore.Query.Direction.DESCENDING)
+                .limit(8)
+                .addSnapshotListener((snapshots, error) -> {
+                    if (error != null || snapshots == null) return;
+                    List<Food> list = new ArrayList<>();
+                    for (DocumentSnapshot doc : snapshots.getDocuments()) {
+                        Food food = doc.toObject(Food.class);
+                        if (food != null && food.isAvailable()) {
+                            food.setId(doc.getId());
+                            list.add(food);
+                            if (list.size() == 6) break; // tối đa 6 món sau khi lọc
+                        }
+                    }
+                    liveData.setValue(list);
+                });
+        return liveData;
+    }
+
     /** Thêm món ăn mới — Firestore tự tạo ID */
     public Task<Void> addFood(Food food) {
         // Dùng Map để tránh lưu field "id" (id là doc key, không phải field)

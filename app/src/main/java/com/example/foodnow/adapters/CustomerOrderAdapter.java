@@ -8,6 +8,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.material.button.MaterialButton;
 import com.example.foodnow.R;
 import com.example.foodnow.models.Order;
 
@@ -18,9 +19,20 @@ import java.util.List;
 import java.util.Locale;
 
 public class CustomerOrderAdapter extends RecyclerView.Adapter<CustomerOrderAdapter.ViewHolder> {
+
+    public interface OnOrderActionListener {
+        void onOrderClick(Order order);
+        void onOrderCancel(Order order);
+    }
+
     private final List<Order> orders = new ArrayList<>();
     private final NumberFormat currFmt = NumberFormat.getInstance(new Locale("vi", "VN"));
     private final SimpleDateFormat timeFmt = new SimpleDateFormat("dd/MM HH:mm", new Locale("vi", "VN"));
+    private OnOrderActionListener listener;
+
+    public void setListener(OnOrderActionListener listener) {
+        this.listener = listener;
+    }
 
     public void setOrders(List<Order> newOrders) {
         orders.clear();
@@ -52,6 +64,17 @@ public class CustomerOrderAdapter extends RecyclerView.Adapter<CustomerOrderAdap
         } else {
             h.tvTime.setText("⏱ --:--");
         }
+
+        // Hiển thị nút hủy chỉ khi đơn còn ở trạng thái "Đơn mới"
+        boolean canCancel = Order.STATUS_NEW.equals(order.getStatus());
+        h.btnCancel.setVisibility(canCancel ? View.VISIBLE : View.GONE);
+
+        h.itemView.setOnClickListener(v -> {
+            if (listener != null) listener.onOrderClick(order);
+        });
+        h.btnCancel.setOnClickListener(v -> {
+            if (listener != null) listener.onOrderCancel(order);
+        });
     }
 
     @Override
@@ -87,15 +110,18 @@ public class CustomerOrderAdapter extends RecyclerView.Adapter<CustomerOrderAdap
 
     static class ViewHolder extends RecyclerView.ViewHolder {
         final TextView tvOrderId, tvStatus, tvStore, tvItems, tvTime, tvTotal;
+        final MaterialButton btnCancel;
 
         ViewHolder(@NonNull View itemView) {
             super(itemView);
             tvOrderId = itemView.findViewById(R.id.tv_customer_order_id);
-            tvStatus = itemView.findViewById(R.id.tv_customer_order_status);
-            tvStore = itemView.findViewById(R.id.tv_customer_order_store);
-            tvItems = itemView.findViewById(R.id.tv_customer_order_items);
-            tvTime = itemView.findViewById(R.id.tv_customer_order_time);
-            tvTotal = itemView.findViewById(R.id.tv_customer_order_total);
+            tvStatus  = itemView.findViewById(R.id.tv_customer_order_status);
+            tvStore   = itemView.findViewById(R.id.tv_customer_order_store);
+            tvItems   = itemView.findViewById(R.id.tv_customer_order_items);
+            tvTime    = itemView.findViewById(R.id.tv_customer_order_time);
+            tvTotal   = itemView.findViewById(R.id.tv_customer_order_total);
+            btnCancel = itemView.findViewById(R.id.btn_cancel_order);
         }
     }
 }
+

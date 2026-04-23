@@ -6,6 +6,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -75,16 +76,15 @@ public class StoreDetailActivity extends AppCompatActivity {
         // ⑤ Setup RecyclerView danh sách món
         foodAdapter = new FoodAdapter(this, foodList, food -> {
             CartManager.AddResult result = CartManager.getInstance().addFood(
-                    food,
-                    1,
+                    food, 1,
                     storeId != null ? storeId : "",
                     storeName != null ? storeName : "",
-                    storeDeliveryFee
-            );
+                    storeDeliveryFee);
             if (result == CartManager.AddResult.STORE_MISMATCH) {
-                Toast.makeText(this,
-                        "Giỏ hàng chỉ chứa món của 1 quán. Vui lòng xóa giỏ hiện tại trước.",
-                        Toast.LENGTH_LONG).show();
+                showStoreMismatchDialog(food,
+                        storeId != null ? storeId : "",
+                        storeName != null ? storeName : "",
+                        storeDeliveryFee);
                 return;
             }
             Toast.makeText(this, "Đã thêm: " + food.getTitle(), Toast.LENGTH_SHORT).show();
@@ -124,6 +124,22 @@ public class StoreDetailActivity extends AppCompatActivity {
                 foodAdapter.notifyDataSetChanged();
             });
         }
+    }
+
+    // Hỏi xác nhận khi thêm món từ quán khác
+    private void showStoreMismatchDialog(Food food, String sId, String sName, long sFee) {
+        String currentStore = CartManager.getInstance().getStoreName();
+        new AlertDialog.Builder(this)
+                .setTitle("Bắt đầu đơn mới?")
+                .setMessage("Giỏ hàng đang có món từ \"" + currentStore
+                        + "\".\nXóa giỏ và thêm từ \"" + sName + "\" không?")
+                .setPositiveButton("Xóa và thêm", (dialog, which) -> {
+                    CartManager.getInstance().clear();
+                    CartManager.getInstance().addFood(food, 1, sId, sName, sFee);
+                    Toast.makeText(this, "Đã thêm: " + food.getTitle(), Toast.LENGTH_SHORT).show();
+                })
+                .setNegativeButton("Hủy", null)
+                .show();
     }
 
     // Định dạng phí giao hàng

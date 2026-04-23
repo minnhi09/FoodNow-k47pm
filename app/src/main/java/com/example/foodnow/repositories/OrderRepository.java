@@ -77,6 +77,11 @@ public class OrderRepository {
                 });
     }
 
+    /** Customer hủy đơn khi trạng thái còn là "Đơn mới". */
+    public Task<Void> cancelOrder(String orderId) {
+        return updateOrderStatus(orderId, Order.STATUS_CANCELLED);
+    }
+
     /**
      * Lắng nghe real-time đơn hàng của một user (dùng cho phía khách hàng).
      */

@@ -27,8 +27,8 @@ import com.example.foodnow.adapters.CategoryAdapter;
 import com.example.foodnow.adapters.RecommendedFoodAdapter;
 import com.example.foodnow.adapters.StoreAdapter;
 import com.example.foodnow.models.Category;
+import com.example.foodnow.models.Food;
 import com.example.foodnow.models.Order;
-import com.example.foodnow.models.RecommendedFood;
 import com.example.foodnow.models.Store;
 import com.example.foodnow.repositories.OrderRepository;
 import com.example.foodnow.utils.CartManager;
@@ -37,7 +37,9 @@ import com.example.foodnow.viewmodels.ProfileViewModel;
 import com.google.firebase.auth.FirebaseAuth;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class HomeFragment extends Fragment {
 
@@ -64,11 +66,14 @@ public class HomeFragment extends Fragment {
     private final List<Store> allStoreList = new ArrayList<>();
     private final List<Store> storeList = new ArrayList<>();
 
+    // Lưu tạm foods và storeNames khi chờ cả 2 cùng sẵn sàng
+    private List<Food> pendingFoods = null;
+    private Map<String, String> pendingStoreNames = null;
+
     // ID danh mục đang chọn; "" = "Tất cả" (không lọc)
     private String selectedCategoryId = "";
 
     private final List<Category> categoryList = new ArrayList<>();
-    private final List<RecommendedFood> recommendedFoodList = new ArrayList<>();
 
     @Nullable
     @Override
@@ -97,8 +102,7 @@ public class HomeFragment extends Fragment {
         // ② Khởi tạo ViewModel
         homeViewModel = new ViewModelProvider(this).get(HomeViewModel.class);
 
-        // ③ Setup RecyclerViews + dữ liệu mock
-        seedMockRecommendedFoods();
+        // ③ Setup RecyclerViews
         setupCategoryRecyclerView();
         setupStoreRecyclerView();
         setupRecommendedRecyclerView();
@@ -239,13 +243,7 @@ public class HomeFragment extends Fragment {
     }
 
     private void setupRecommendedRecyclerView() {
-        recommendedFoodAdapter = new RecommendedFoodAdapter(
-                requireContext(),
-                recommendedFoodList,
-                food -> Toast.makeText(requireContext(),
-                        "Đã thêm " + food.getName(),
-                        Toast.LENGTH_SHORT).show()
-        );
+        recommendedFoodAdapter = new RecommendedFoodAdapter(requireContext());
         rvRecommendedFoods.setLayoutManager(new GridLayoutManager(requireContext(), 2));
         rvRecommendedFoods.setAdapter(recommendedFoodAdapter);
     }
@@ -280,47 +278,31 @@ public class HomeFragment extends Fragment {
             // Áp lại từ khóa đang nhập (nếu có)
             filterStores(etSearch.getText().toString().trim());
         });
+
+        // Observe món ăn nổi bật
+        homeViewModel.getTopRatedFoods().observe(getViewLifecycleOwner(), foods -> {
+            pendingFoods = foods;
+            if (foods != null && !foods.isEmpty()) {
+                homeViewModel.fetchStoreNamesForFoods(foods);
+            } else {
+                // Không có food → xóa trắng adapter
+                recommendedFoodAdapter.setData(null, null);
+            }
+        });
+
+        // Observe tên quán (được fetch sau khi foods sẵn sàng)
+        homeViewModel.getStoreNamesMap().observe(getViewLifecycleOwner(), storeNames -> {
+            pendingStoreNames = storeNames;
+            if (pendingFoods != null) {
+                recommendedFoodAdapter.setData(pendingFoods,
+                        pendingStoreNames != null ? pendingStoreNames : new HashMap<>());
+            }
+        });
     }
 
     // ═══════════════════════════════════════════════════════
     // DỮ LIỆU MẪU (dùng khi Firestore trống)
     // ═══════════════════════════════════════════════════════
-
-    private void seedMockRecommendedFoods() {
-        recommendedFoodList.clear();
-        recommendedFoodList.add(new RecommendedFood(
-                "Phở Bò Đặc Biệt",
-                "Phở Hà Nội",
-                65000,
-                4.8f,
-                "https://images.unsplash.com/photo-1582878826629-29b7ad1cdc43",
-                true
-        ));
-        recommendedFoodList.add(new RecommendedFood(
-                "Gỏi Cuốn Tôm Thịt",
-                "Quán Việt",
-                35000,
-                4.7f,
-                "https://images.unsplash.com/photo-1604908176997-431ec29b605e",
-                false
-        ));
-        recommendedFoodList.add(new RecommendedFood(
-                "Cơm Gà Xối Mỡ",
-                "Cơm Gà Hải Nam",
-                45000,
-                4.6f,
-                "https://images.unsplash.com/photo-1512058564366-18510be2db19",
-                true
-        ));
-        recommendedFoodList.add(new RecommendedFood(
-                "Xiên Nướng BBQ",
-                "BBQ House",
-                25000,
-                4.5f,
-                "https://images.unsplash.com/photo-1529692236671-f1dc3ce964f1",
-                false
-        ));
-    }
 
     private void addMockStores() {
         allStoreList.add(buildStore("Phở Hà Nội", "Việt Nam", 4.8f, "20-30 phút",
