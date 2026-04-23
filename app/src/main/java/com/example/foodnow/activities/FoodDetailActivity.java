@@ -1,5 +1,6 @@
 package com.example.foodnow.activities;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -12,7 +13,9 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 import com.example.foodnow.R;
 import com.example.foodnow.adapters.ReviewAdapter;
+import com.example.foodnow.models.Food;
 import com.example.foodnow.models.Review;
+import com.example.foodnow.utils.CartManager;
 
 import java.text.NumberFormat;
 import java.util.ArrayList;
@@ -35,6 +38,12 @@ public class FoodDetailActivity extends AppCompatActivity {
     private int quantity = 1;
     private long unitPrice = 0L;
     private boolean isFavorite = false;
+    private String foodId = "";
+    private String foodTitle = "";
+    private String foodImageUrl = "";
+    private String foodStoreId = "";
+    private String storeName = "";
+    private long storeDeliveryFee = 0L;
     private final NumberFormat currencyFormatter =
             NumberFormat.getInstance(new Locale("vi", "VN"));
 
@@ -76,14 +85,17 @@ public class FoodDetailActivity extends AppCompatActivity {
 
     // ── ② Nhận dữ liệu từ Intent extras ──────────────────
     private void receiveIntentData() {
-        String foodTitle       = getIntent().getStringExtra("foodTitle");
+        foodId                 = safe(getIntent().getStringExtra("foodId"));
+        foodTitle              = safe(getIntent().getStringExtra("foodTitle"));
         String foodDescription = getIntent().getStringExtra("foodDescription");
-        String foodImageUrl    = getIntent().getStringExtra("foodImageUrl");
+        foodImageUrl           = safe(getIntent().getStringExtra("foodImageUrl"));
         float  foodRating      = getIntent().getFloatExtra("foodRating", 0f);
         unitPrice              = getIntent().getLongExtra("foodPrice", 0L);
 
-        String storeName       = getIntent().getStringExtra("storeName");
+        storeName              = safe(getIntent().getStringExtra("storeName"));
         String storeTime       = getIntent().getStringExtra("storeDeliveryTime");
+        foodStoreId            = safe(getIntent().getStringExtra("foodStoreId"));
+        storeDeliveryFee       = getIntent().getLongExtra("storeDeliveryFee", 0L);
 
         // Hiển thị dữ liệu cơ bản
         tvTitle.setText(foodTitle != null ? foodTitle : "Món ăn");
@@ -157,17 +169,10 @@ public class FoodDetailActivity extends AppCompatActivity {
         });
     }
 
-    // ── ⑤ Nút "Giỏ hàng" và "Đặt" ── Toast (chờ TV3) ────
+    // ── ⑤ Nút "Giỏ hàng" và "Đặt" ─────────────────────────
     private void setupOrderButtons() {
-        btnAddToCart.setOnClickListener(v ->
-                Toast.makeText(this,
-                        "Đã thêm vào giỏ hàng!",
-                        Toast.LENGTH_SHORT).show());
-
-        btnOrder.setOnClickListener(v ->
-                Toast.makeText(this,
-                        "Đặt " + quantity + " món — chức năng sắp ra mắt!",
-                        Toast.LENGTH_SHORT).show());
+        btnAddToCart.setOnClickListener(v -> addToCart(quantity, false));
+        btnOrder.setOnClickListener(v -> addToCart(quantity, true));
     }
 
     // ── ⑥ Mock reviews — chưa có Firestore collection ────
@@ -185,5 +190,41 @@ public class FoodDetailActivity extends AppCompatActivity {
         rvReviews.setLayoutManager(new LinearLayoutManager(this));
         rvReviews.setNestedScrollingEnabled(false);
         rvReviews.setAdapter(new ReviewAdapter(this, reviews));
+    }
+
+    private void addToCart(int qty, boolean openCartAfter) {
+        Food food = new Food();
+        food.setId(foodId);
+        food.setTitle(foodTitle);
+        food.setPrice(unitPrice);
+        food.setImageUrl(foodImageUrl);
+        food.setStoreId(foodStoreId);
+
+        CartManager.AddResult result = CartManager.getInstance().addFood(
+                food,
+                qty,
+                foodStoreId,
+                storeName,
+                storeDeliveryFee
+        );
+        if (result == CartManager.AddResult.STORE_MISMATCH) {
+            Toast.makeText(this,
+                    "Giỏ hàng chỉ chứa món từ 1 quán. Vui lòng xóa giỏ hiện tại trước.",
+                    Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        Toast.makeText(this, "Đã thêm vào giỏ hàng", Toast.LENGTH_SHORT).show();
+        if (openCartAfter) {
+            Intent intent = new Intent(this, com.example.foodnow.MainActivity.class);
+            intent.putExtra("open_tab", "cart");
+            intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+            startActivity(intent);
+            finish();
+        }
+    }
+
+    private String safe(String value) {
+        return value != null ? value : "";
     }
 }

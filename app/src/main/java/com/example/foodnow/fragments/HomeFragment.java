@@ -31,6 +31,7 @@ import com.example.foodnow.models.Order;
 import com.example.foodnow.models.RecommendedFood;
 import com.example.foodnow.models.Store;
 import com.example.foodnow.repositories.OrderRepository;
+import com.example.foodnow.utils.CartManager;
 import com.example.foodnow.viewmodels.HomeViewModel;
 import com.example.foodnow.viewmodels.ProfileViewModel;
 import com.google.firebase.auth.FirebaseAuth;
@@ -115,8 +116,28 @@ public class HomeFragment extends Fragment {
         observeActiveOrder();
 
         // ⑧ Action click nhanh
-        ivHeaderCart.setOnClickListener(v ->
-                Toast.makeText(requireContext(), "Mở giỏ hàng", Toast.LENGTH_SHORT).show());
+        ivHeaderCart.setOnClickListener(v -> {
+            android.view.View navView = requireActivity().findViewById(R.id.bottom_navigation);
+            if (navView instanceof com.google.android.material.bottomnavigation.BottomNavigationView) {
+                ((com.google.android.material.bottomnavigation.BottomNavigationView) navView)
+                        .setSelectedItemId(R.id.nav_cart);
+            }
+        });
+        layoutOrderCard.setOnClickListener(v -> {
+            android.view.View navView = requireActivity().findViewById(R.id.bottom_navigation);
+            if (navView instanceof com.google.android.material.bottomnavigation.BottomNavigationView) {
+                ((com.google.android.material.bottomnavigation.BottomNavigationView) navView)
+                        .setSelectedItemId(R.id.nav_orders);
+            }
+        });
+
+        updateHeaderCartBadge();
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        updateHeaderCartBadge();
     }
 
     // ═══════════════════════════════════════════════════════
@@ -369,5 +390,15 @@ public class HomeFragment extends Fragment {
                 layoutOrderCard.setVisibility(View.GONE);
             }
         });
+    }
+
+    private void updateHeaderCartBadge() {
+        int count = CartManager.getInstance().getItemCount();
+        if (count <= 0) {
+            tvCartBadge.setVisibility(View.GONE);
+            return;
+        }
+        tvCartBadge.setVisibility(View.VISIBLE);
+        tvCartBadge.setText(String.valueOf(Math.min(count, 99)));
     }
 }

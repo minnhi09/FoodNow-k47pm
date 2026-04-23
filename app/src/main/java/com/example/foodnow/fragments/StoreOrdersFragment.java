@@ -1,5 +1,9 @@
 package com.example.foodnow.fragments;
 
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.content.Context;
+import android.os.Build;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -11,6 +15,8 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
+import androidx.core.app.NotificationCompat;
+import androidx.core.app.NotificationManagerCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -39,6 +45,7 @@ public class StoreOrdersFragment extends Fragment {
     private StoreOwnerViewModel viewModel;
     private StoreOrderAdapter   adapter;
     private List<Order>         allOrders = new ArrayList<>();
+    private long lastNewCount = -1;
 
     private TextView    tabAll, tabNew, tabProcessing, tabDone;
     private TextView    tvCountToday, tvNewBadge, tvTabNewBadge;
@@ -95,6 +102,7 @@ public class StoreOrdersFragment extends Fragment {
         // Observe orders
         viewModel.getOrders(storeId).observe(getViewLifecycleOwner(), orders -> {
             allOrders = orders != null ? orders : new ArrayList<>();
+            notifyIfNewOrders();
             updateHeader();
             applyFilter();
         });
@@ -185,6 +193,43 @@ public class StoreOrdersFragment extends Fragment {
                 .filter(o -> o.getCreatedAt() != null
                         && o.getCreatedAt().toDate().after(today.getTime()))
                 .collect(Collectors.toList());
+    }
+
+    private void notifyIfNewOrders() {
+        long newCount = allOrders.stream()
+                .filter(o -> Order.STATUS_NEW.equals(o.getStatus()))
+                .count();
+        if (lastNewCount >= 0 && newCount > lastNewCount) {
+            long delta = newCount - lastNewCount;
+            String message = "Bạn có " + delta + " đơn mới";
+            android.widget.Toast.makeText(requireContext(), message, android.widget.Toast.LENGTH_SHORT).show();
+            showLocalNotification(message);
+        }
+        lastNewCount = newCount;
+    }
+
+    private void showLocalNotification(String message) {
+        String channelId = "owner_orders_channel";
+        Context context = requireContext();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationChannel channel = new NotificationChannel(
+                    channelId,
+                    "Đơn hàng chủ quán",
+                    NotificationManager.IMPORTANCE_DEFAULT
+            );
+            channel.setDescription("Thông báo khi có đơn mới");
+            NotificationManager manager = context.getSystemService(NotificationManager.class);
+            if (manager != null) manager.createNotificationChannel(channel);
+        }
+
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(context, channelId)
+                .setSmallIcon(R.mipmap.ic_launcher)
+                .setContentTitle("FoodNow - Đơn hàng mới")
+                .setContentText(message)
+                .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+                .setAutoCancel(true);
+
+        NotificationManagerCompat.from(context).notify(1001, builder.build());
     }
 }
 

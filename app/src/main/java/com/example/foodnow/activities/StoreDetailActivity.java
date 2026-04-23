@@ -15,6 +15,7 @@ import com.bumptech.glide.Glide;
 import com.example.foodnow.R;
 import com.example.foodnow.adapters.FoodAdapter;
 import com.example.foodnow.models.Food;
+import com.example.foodnow.utils.CartManager;
 import com.example.foodnow.viewmodels.StoreDetailViewModel;
 
 import java.text.NumberFormat;
@@ -73,10 +74,20 @@ public class StoreDetailActivity extends AppCompatActivity {
 
         // ⑤ Setup RecyclerView danh sách món
         foodAdapter = new FoodAdapter(this, foodList, food -> {
-            // TODO: Kết nối CartManager khi TV3 hoàn thành
-            Toast.makeText(this,
-                    "Đã thêm: " + food.getTitle(),
-                    Toast.LENGTH_SHORT).show();
+            CartManager.AddResult result = CartManager.getInstance().addFood(
+                    food,
+                    1,
+                    storeId != null ? storeId : "",
+                    storeName != null ? storeName : "",
+                    storeDeliveryFee
+            );
+            if (result == CartManager.AddResult.STORE_MISMATCH) {
+                Toast.makeText(this,
+                        "Giỏ hàng chỉ chứa món của 1 quán. Vui lòng xóa giỏ hiện tại trước.",
+                        Toast.LENGTH_LONG).show();
+                return;
+            }
+            Toast.makeText(this, "Đã thêm: " + food.getTitle(), Toast.LENGTH_SHORT).show();
         });
 
         // Click vào card món → mở FoodDetailActivity
@@ -91,6 +102,7 @@ public class StoreDetailActivity extends AppCompatActivity {
             intent.putExtra("foodPrice",        food.getPrice());
             intent.putExtra("foodImageUrl",     food.getImageUrl());
             intent.putExtra("foodRating",       food.getRating());
+            intent.putExtra("foodStoreId",      storeId);
             intent.putExtra("storeName",        finalStoreName);
             intent.putExtra("storeDeliveryTime",finalStoreTime);
             intent.putExtra("storeDeliveryFee", finalDeliveryFee);
