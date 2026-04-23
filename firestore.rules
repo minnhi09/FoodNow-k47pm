@@ -1,0 +1,91 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function userDoc() {
+      return get(/databases/$(database)/documents/Users/$(request.auth.uid));
+    }
+
+    function userRole() {
+      return signedIn() ? userDoc().data.role : null;
+    }
+
+    function isAdmin() {
+      return userRole() == "admin";
+    }
+
+    function isStoreOwner() {
+      return userRole() == "store_owner";
+    }
+
+    function ownerStoreId() {
+      return signedIn() ? userDoc().data.storeId : null;
+    }
+
+    // Users: user chỉ đọc/ghi profile của chính mình
+    match /Users/{userId} {
+      allow read, update, delete: if signedIn() && request.auth.uid == userId;
+      allow create: if signedIn() && request.auth.uid == userId;
+    }
+
+    // Stores: mọi người được đọc, chỉ chủ quán tương ứng hoặc admin được sửa
+    match /Stores/{storeId} {
+      allow read: if true;
+      allow create: if signedIn();
+      allow update, delete: if isAdmin()
+        || (isStoreOwner() && resource.data.storeOwnerId == request.auth.uid);
+    }
+
+    // Foods: mọi người đọc, ghi bởi chủ quán sở hữu storeId hoặc admin
+    match /Foods/{foodId} {
+      allow read: if true;
+      allow create: if isAdmin()
+        || (isStoreOwner() && request.resource.data.storeId == ownerStoreId());
+      allow update, delete: if isAdmin()
+        || (isStoreOwner() && resource.data.storeId == ownerStoreId());
+    }
+
+    // Orders:
+    // - Customer tạo đơn của chính mình
+    // - Customer đọc đơn của chính mình
+    // - Store owner đọc/cập nhật đơn thuộc cửa hàng của mình
+    match /Orders/{orderId} {
+      allow read: if isAdmin()
+        || (signedIn() && resource.data.userId == request.auth.uid)
+        || (isStoreOwner() && resource.data.storeId == ownerStoreId());
+
+      allow create: if signedIn()
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.status == "Đơn mới";
+
+      allow update: if isAdmin()
+        || (isStoreOwner()
+            && resource.data.storeId == ownerStoreId()
+            && request.resource.data.userId == resource.data.userId
+            && request.resource.data.storeId == resource.data.storeId)
+        || (signedIn()
+            && resource.data.userId == request.auth.uid
+            && request.resource.data.status == "Đã hủy"
+            && request.resource.data.userId == resource.data.userId
+            && request.resource.data.storeId == resource.data.storeId);
+
+      allow delete: if false;
+    }
+
+    // Categories: đọc public, ghi cho admin
+    match /Categories/{categoryId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Favorites: user chỉ thao tác trên dữ liệu của chính mình
+    match /Favorites/{favoriteId} {
+      allow read, delete: if signedIn() && resource.data.userId == request.auth.uid;
+      allow create, update: if signedIn() && request.resource.data.userId == request.auth.uid;
+    }
+  }
+}
