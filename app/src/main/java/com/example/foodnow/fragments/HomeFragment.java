@@ -9,6 +9,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -26,9 +27,13 @@ import com.example.foodnow.adapters.CategoryAdapter;
 import com.example.foodnow.adapters.RecommendedFoodAdapter;
 import com.example.foodnow.adapters.StoreAdapter;
 import com.example.foodnow.models.Category;
+import com.example.foodnow.models.Order;
 import com.example.foodnow.models.RecommendedFood;
 import com.example.foodnow.models.Store;
+import com.example.foodnow.repositories.OrderRepository;
 import com.example.foodnow.viewmodels.HomeViewModel;
+import com.example.foodnow.viewmodels.ProfileViewModel;
+import com.google.firebase.auth.FirebaseAuth;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -38,6 +43,10 @@ public class HomeFragment extends Fragment {
     // ── Khai báo biến ────────────────────────────────────
     private HomeViewModel homeViewModel;
 
+    private TextView tvDeliveryAddress;
+    private LinearLayout layoutOrderCard;
+    private TextView tvOrderStatus;
+    private TextView tvCartBadge;
     private EditText etSearch;
     private TextView tvNoResults;
     private RecyclerView rvCategories;
@@ -73,6 +82,10 @@ public class HomeFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
 
         // ① Ánh xạ view
+        tvDeliveryAddress = view.findViewById(R.id.tv_delivery_address);
+        layoutOrderCard   = view.findViewById(R.id.layout_order_card);
+        tvOrderStatus     = view.findViewById(R.id.tv_order_status);
+        tvCartBadge       = view.findViewById(R.id.tv_header_cart_badge);
         etSearch        = view.findViewById(R.id.et_search);
         tvNoResults     = view.findViewById(R.id.tv_no_results);
         rvCategories    = view.findViewById(R.id.rv_categories);
@@ -95,7 +108,13 @@ public class HomeFragment extends Fragment {
         // ⑤ Observe data từ Firestore
         observeData();
 
-        // ⑥ Action click nhanh
+        // ⑥ Observe địa chỉ giao hàng từ profile user
+        observeUserAddress();
+
+        // ⑦ Observe đơn hàng đang hoạt động
+        observeActiveOrder();
+
+        // ⑧ Action click nhanh
         ivHeaderCart.setOnClickListener(v ->
                 Toast.makeText(requireContext(), "Mở giỏ hàng", Toast.LENGTH_SHORT).show());
     }
@@ -300,5 +319,55 @@ public class HomeFragment extends Fragment {
         store.setImageUrl(imageUrl);
         store.setCategoryId(categoryId);
         return store;
+    }
+
+    // ═══════════════════════════════════════════════════════
+    // ĐỊA CHỈ GIAO HÀNG — lấy từ profile user
+    // ═══════════════════════════════════════════════════════
+
+    private void observeUserAddress() {
+        ProfileViewModel profileViewModel =
+                new ViewModelProvider(this).get(ProfileViewModel.class);
+        profileViewModel.getUser().observe(getViewLifecycleOwner(), user -> {
+            if (user != null && user.getAddress() != null && !user.getAddress().isEmpty()) {
+                tvDeliveryAddress.setText(user.getAddress());
+            } else {
+                tvDeliveryAddress.setText("Chưa thiết lập địa chỉ");
+            }
+        });
+    }
+
+    // ═══════════════════════════════════════════════════════
+    // ĐƠN HÀNG ĐANG HOẠT ĐỘNG — chỉ hiển thị khi có đơn chưa hoàn thành
+    // ═══════════════════════════════════════════════════════
+
+    private void observeActiveOrder() {
+        String uid = FirebaseAuth.getInstance().getCurrentUser() != null
+                ? FirebaseAuth.getInstance().getCurrentUser().getUid() : null;
+        if (uid == null) return;
+
+        OrderRepository orderRepo = new OrderRepository();
+        orderRepo.getOrdersByUser(uid).observe(getViewLifecycleOwner(), orders -> {
+            if (orders == null || orders.isEmpty()) {
+                layoutOrderCard.setVisibility(View.GONE);
+                return;
+            }
+            // Tìm đơn hàng đang hoạt động (chưa hoàn thành và chưa hủy)
+            // orders được sắp xếp theo createdAt giảm dần → lấy đơn mới nhất trước
+            Order activeOrder = null;
+            for (Order order : orders) {
+                String status = order.getStatus();
+                if (!Order.STATUS_DONE.equals(status) && !Order.STATUS_CANCELLED.equals(status)) {
+                    activeOrder = order;
+                    break;
+                }
+            }
+            if (activeOrder != null) {
+                tvOrderStatus.setText(activeOrder.getStatus());
+                layoutOrderCard.setVisibility(View.VISIBLE);
+            } else {
+                layoutOrderCard.setVisibility(View.GONE);
+            }
+        });
     }
 }

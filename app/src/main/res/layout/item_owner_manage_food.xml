@@ -73,7 +73,15 @@
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:orientation="vertical">
+            android:orientation="vertical"
+            android:gravity="center">
+
+            <!-- Toggle ẩn/hiện món -->
+            <Switch
+                android:id="@+id/switch_available"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="4dp" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btn_edit"

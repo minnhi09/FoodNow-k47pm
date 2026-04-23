@@ -66,6 +66,11 @@ public class FoodRepository {
         return db.collection("Foods").document(foodId).delete();
     }
 
+    /** Cập nhật nhanh trạng thái isAvailable của món ăn */
+    public Task<Void> updateFoodAvailability(String foodId, boolean isAvailable) {
+        return db.collection("Foods").document(foodId).update("isAvailable", isAvailable);
+    }
+
     private Map<String, Object> foodToMap(Food food) {
         Map<String, Object> map = new HashMap<>();
         map.put("title", food.getTitle());

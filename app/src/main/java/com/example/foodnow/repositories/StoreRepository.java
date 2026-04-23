@@ -48,6 +48,10 @@ public class StoreRepository {
     /** Lấy 1 quán theo ID (real-time) */
     public LiveData<Store> getStoreById(String storeId) {
         MutableLiveData<Store> liveData = new MutableLiveData<>();
+        if (storeId == null || storeId.isEmpty()) {
+            liveData.setValue(null);
+            return liveData;
+        }
         db.collection("Stores").document(storeId)
                 .addSnapshotListener((doc, error) -> {
                     if (error != null || doc == null) return;

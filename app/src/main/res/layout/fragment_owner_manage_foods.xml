@@ -25,20 +25,83 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="Thực đơn của quán"
+                android:text="Quản lý thực đơn"
+                android:textColor="#212121"
                 android:textSize="18sp"
-                android:textStyle="bold"
-                android:textColor="#212121" />
+                android:textStyle="bold" />
 
             <TextView
                 android:id="@+id/tv_food_count"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="0 món"
-                android:textSize="13sp"
-                android:textColor="#757575" />
+                android:textColor="#757575"
+                android:textSize="13sp" />
 
         </LinearLayout>
+
+        <!-- Search bar -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@color/white"
+            android:paddingStart="12dp"
+            android:paddingTop="8dp"
+            android:paddingEnd="12dp"
+            android:paddingBottom="8dp">
+
+            <EditText
+                android:id="@+id/et_search_food"
+                android:layout_width="match_parent"
+                android:layout_height="44dp"
+                android:background="@drawable/bg_search_input"
+                android:drawableStart="@android:drawable/ic_menu_search"
+                android:drawablePadding="8dp"
+                android:hint="Tìm kiếm món ăn..."
+                android:imeOptions="actionSearch"
+                android:inputType="text"
+                android:maxLines="1"
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp"
+                android:textSize="14sp" />
+
+        </LinearLayout>
+
+        <!-- Category filter chips -->
+        <HorizontalScrollView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@color/white"
+            android:paddingBottom="8dp"
+            android:scrollbars="none">
+
+            <LinearLayout
+                android:id="@+id/chip_group_categories"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp">
+
+                <!-- "Tất cả" chip — luôn hiển thị -->
+                <TextView
+                    android:id="@+id/chip_all"
+                    android:layout_width="wrap_content"
+                    android:layout_height="32dp"
+                    android:layout_marginEnd="8dp"
+                    android:background="@drawable/bg_tab_selected"
+                    android:gravity="center"
+                    android:paddingStart="14dp"
+                    android:paddingEnd="14dp"
+                    android:text="Tất cả"
+                    android:textColor="#FFFFFF"
+                    android:textSize="12sp" />
+
+                <!-- Chips danh mục sẽ được thêm động từ Fragment -->
+
+            </LinearLayout>
+
+        </HorizontalScrollView>
 
         <!-- Empty state -->
         <LinearLayout
@@ -61,16 +124,16 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
                 android:text="Chưa có món ăn nào"
-                android:textSize="16sp"
-                android:textColor="#9E9E9E" />
+                android:textColor="#9E9E9E"
+                android:textSize="16sp" />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
                 android:text="Nhấn + bên dưới để thêm món đầu tiên"
-                android:textSize="13sp"
-                android:textColor="#BDBDBD" />
+                android:textColor="#BDBDBD"
+                android:textSize="13sp" />
 
         </LinearLayout>
 
@@ -80,8 +143,8 @@
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1"
-            android:padding="8dp"
-            android:clipToPadding="false" />
+            android:clipToPadding="false"
+            android:padding="8dp" />
 
     </LinearLayout>
 
@@ -96,4 +159,3 @@
         app:srcCompat="@android:drawable/ic_input_add" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
-

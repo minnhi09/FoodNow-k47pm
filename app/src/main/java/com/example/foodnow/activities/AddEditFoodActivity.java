@@ -55,7 +55,7 @@ public class AddEditFoodActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_add_edit_food);
+        setContentView(R.layout.activity_owner_add_edit_food);
 
         // Toolbar
         if (getSupportActionBar() != null) {
