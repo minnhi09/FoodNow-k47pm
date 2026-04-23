@@ -1,16 +1,14 @@
 package com.example.foodnow.fragments;
 
 import android.content.Intent;
-import android.net.Uri;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.activity.result.ActivityResultLauncher;
-import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
@@ -18,28 +16,24 @@ import androidx.lifecycle.ViewModelProvider;
 
 import com.bumptech.glide.Glide;
 import com.example.foodnow.R;
+import com.example.foodnow.activities.EditProfileActivity;
 import com.example.foodnow.activities.ImageAdminActivity;
 import com.example.foodnow.activities.LoginActivity;
-import com.example.foodnow.utils.CloudinaryHelper;
 import com.example.foodnow.viewmodels.AuthViewModel;
 import com.example.foodnow.viewmodels.ProfileViewModel;
-import com.google.android.gms.tasks.Task;
-import com.google.android.material.button.MaterialButton;
-import com.google.android.material.textfield.TextInputEditText;
-
-import java.util.HashMap;
-import java.util.Map;
 
 public class ProfileFragment extends Fragment {
 
     private ProfileViewModel profileViewModel;
     private AuthViewModel authViewModel;
-    private TextInputEditText etName, etPhone, etAddress;
-    private ImageView imgAvatar;
-    private MaterialButton btnSave, btnLogout, btnChangeAvatar, btnManageImages;
 
-    // ① Khai báo launcher chọn ảnh từ máy
-    private ActivityResultLauncher<String> pickImageLauncher;
+    private ImageView imgAvatar;
+    private TextView tvUserName, tvUserEmail, tvPointsSubtitle;
+    private View rowUserHeader, rowPersonalInfo, rowAddress, rowPayment;
+    private View rowVouchers, rowPoints;
+    private View rowNotifications, rowAppSettings, rowHelp;
+    private View rowAdmin, dividerAdmin;
+    private View rowLogout;
 
     @Nullable
     @Override
@@ -49,137 +43,82 @@ public class ProfileFragment extends Fragment {
 
         View view = inflater.inflate(R.layout.fragment_profile, container, false);
 
-        etName    = view.findViewById(R.id.et_profile_name);
-        etPhone   = view.findViewById(R.id.et_profile_phone);
-        etAddress = view.findViewById(R.id.et_profile_address);
-        imgAvatar = view.findViewById(R.id.img_avatar);
-        btnSave = view.findViewById(R.id.btn_save_profile);
-        btnLogout = view.findViewById(R.id.btn_logout);
-        btnChangeAvatar = view.findViewById(R.id.btn_change_avatar);
-        btnManageImages = view.findViewById(R.id.btn_manage_images);
+        imgAvatar        = view.findViewById(R.id.img_avatar);
+        tvUserName       = view.findViewById(R.id.tv_user_name);
+        tvUserEmail      = view.findViewById(R.id.tv_user_email);
+        tvPointsSubtitle = view.findViewById(R.id.tv_points_subtitle);
+        rowUserHeader    = view.findViewById(R.id.row_user_header);
+        rowPersonalInfo  = view.findViewById(R.id.row_personal_info);
+        rowAddress       = view.findViewById(R.id.row_address);
+        rowPayment       = view.findViewById(R.id.row_payment);
+        rowVouchers      = view.findViewById(R.id.row_vouchers);
+        rowPoints        = view.findViewById(R.id.row_points);
+        rowNotifications = view.findViewById(R.id.row_notifications);
+        rowAppSettings   = view.findViewById(R.id.row_app_settings);
+        rowHelp          = view.findViewById(R.id.row_help);
+        rowAdmin         = view.findViewById(R.id.row_admin);
+        dividerAdmin     = view.findViewById(R.id.divider_admin);
+        rowLogout        = view.findViewById(R.id.row_logout);
 
         profileViewModel = new ViewModelProvider(this).get(ProfileViewModel.class);
         authViewModel    = new ViewModelProvider(this).get(AuthViewModel.class);
 
-        // ② Đăng ký launcher
-        pickImageLauncher = registerForActivityResult(
-                new ActivityResultContracts.GetContent(),
-                uri -> {
-                    if (uri != null) uploadAvatar(uri);
-                }
-        );
-
-        // ③ Nút đổi ảnh
-        btnChangeAvatar.setOnClickListener(v -> {
-            pickImageLauncher.launch("image/*");
-        });
-
-        // ④ Nút quản trị upload ảnh Store/Food
-        btnManageImages.setOnClickListener(v -> openImageAdminScreen());
-
         // Quan sát thông tin user
         profileViewModel.getUser().observe(getViewLifecycleOwner(), user -> {
             if (user == null) return;
-            etName.setText(user.getName());
-            etPhone.setText(user.getPhone());
-            etAddress.setText(user.getAddress());
 
-            // Chỉ admin mới thấy nút Quản trị
+            tvUserName.setText(user.getName() != null ? user.getName() : "");
+            tvUserEmail.setText(user.getPhone() != null ? user.getPhone() : "");
+            tvPointsSubtitle.setText("0 điểm");
+
+            // Chỉ admin mới thấy mục Quản trị ảnh
             boolean isAdmin = "admin".equals(user.getRole());
-            btnManageImages.setVisibility(isAdmin ? View.VISIBLE : View.GONE);
+            rowAdmin.setVisibility(isAdmin ? View.VISIBLE : View.GONE);
+            dividerAdmin.setVisibility(isAdmin ? View.VISIBLE : View.GONE);
 
             if (user.getImageUrl() != null && !user.getImageUrl().isEmpty()) {
-                Glide.with(requireContext()).load(user.getImageUrl())
-                        .placeholder(R.mipmap.ic_launcher).into(imgAvatar);
+                Glide.with(requireContext())
+                        .load(user.getImageUrl())
+                        .circleCrop()
+                        .placeholder(R.drawable.bg_profile_avatar)
+                        .into(imgAvatar);
             }
         });
 
-        // Lưu thông tin profile
-        btnSave.setOnClickListener(v -> {
-            Map<String, Object> updates = new HashMap<>();
-            updates.put("name", etName.getText().toString().trim());
-            updates.put("phone", etPhone.getText().toString().trim());
-            updates.put("address", etAddress.getText().toString().trim());
-            Task<Void> updateTask = profileViewModel.updateUser(updates);
-            updateTask.addOnSuccessListener(unused -> showToast("Đã lưu thông tin"))
-                    .addOnFailureListener(error ->
-                            showToast("Lưu thông tin thất bại: " + getErrorMessage(error)));
+        // Mở màn hình chỉnh sửa thông tin
+        View.OnClickListener openEditProfile = v -> {
+            Intent intent = new Intent(requireContext(), EditProfileActivity.class);
+            startActivity(intent);
+        };
+        rowUserHeader.setOnClickListener(openEditProfile);
+        rowPersonalInfo.setOnClickListener(openEditProfile);
+
+        // Các mục chưa có màn hình → thông báo
+        View.OnClickListener comingSoon = v ->
+                Toast.makeText(requireContext(), "Tính năng đang phát triển", Toast.LENGTH_SHORT).show();
+        rowAddress.setOnClickListener(comingSoon);
+        rowPayment.setOnClickListener(comingSoon);
+        rowVouchers.setOnClickListener(comingSoon);
+        rowPoints.setOnClickListener(comingSoon);
+        rowNotifications.setOnClickListener(comingSoon);
+        rowAppSettings.setOnClickListener(comingSoon);
+        rowHelp.setOnClickListener(comingSoon);
+
+        // Admin: mở màn hình quản trị ảnh
+        rowAdmin.setOnClickListener(v -> {
+            Intent intent = new Intent(requireContext(), ImageAdminActivity.class);
+            startActivity(intent);
         });
 
         // Đăng xuất
-        btnLogout.setOnClickListener(v -> {
+        rowLogout.setOnClickListener(v -> {
             authViewModel.logout();
-            Intent intent = new Intent(getContext(), LoginActivity.class);
+            Intent intent = new Intent(requireContext(), LoginActivity.class);
             intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
             startActivity(intent);
         });
 
         return view;
     }
-
-    private void uploadAvatar(Uri imageUri) {
-        CloudinaryHelper.uploadImage(requireContext(), imageUri, CloudinaryHelper.FOLDER_PROFILES,
-                new CloudinaryHelper.OnUploadCallback() {
-                    @Override
-                    public void onStart() {
-                        setAvatarActionsEnabled(false);
-                        showToast("Đang upload ảnh đại diện...");
-                    }
-
-                    @Override
-                    public void onSuccess(String secureUrl) {
-                        if (!isAdded()) return;
-                        Map<String, Object> updates = new HashMap<>();
-                        updates.put("imageUrl", secureUrl);
-                        profileViewModel.updateUser(updates)
-                                .addOnSuccessListener(unused -> {
-                                    if (!isAdded()) return;
-                                    Glide.with(requireContext())
-                                            .load(secureUrl)
-                                            .placeholder(R.mipmap.ic_launcher)
-                                            .into(imgAvatar);
-                                    showToast("Đã cập nhật ảnh đại diện");
-                                })
-                                .addOnFailureListener(error -> {
-                                    if (!isAdded()) return;
-                                    showToast("Lưu ảnh đại diện thất bại: " + getErrorMessage(error));
-                                })
-                                .addOnCompleteListener(task -> {
-                                    if (!isAdded()) return;
-                                    setAvatarActionsEnabled(true);
-                                });
-                    }
-
-                    @Override
-                    public void onError(String errorMessage) {
-                        if (!isAdded()) return;
-                        setAvatarActionsEnabled(true);
-                        showToast("Upload ảnh thất bại: " + errorMessage);
-                    }
-                });
-    }
-
-    private void openImageAdminScreen() {
-        Intent intent = new Intent(requireContext(), ImageAdminActivity.class);
-        startActivity(intent);
-    }
-
-    private void setAvatarActionsEnabled(boolean isEnabled) {
-        btnChangeAvatar.setEnabled(isEnabled);
-        btnSave.setEnabled(isEnabled);
-        btnManageImages.setEnabled(isEnabled);
-        btnLogout.setEnabled(isEnabled);
-    }
-
-    private void showToast(String message) {
-        if (getContext() == null) return;
-        Toast.makeText(getContext(), message, Toast.LENGTH_SHORT).show();
-    }
-
-    private String getErrorMessage(@NonNull Exception error) {
-        if (error.getMessage() == null || error.getMessage().trim().isEmpty()) {
-            return "Đã xảy ra lỗi";
-        }
-        return error.getMessage();
-    }
 }
+
