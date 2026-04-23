@@ -85,7 +85,6 @@ public class OwnerSettingsFragment extends Fragment {
         View rowPolicy  = view.findViewById(R.id.row_policy);
         View rowHelp    = view.findViewById(R.id.row_help);
 
-        TextView btnSwitchCustomer = view.findViewById(R.id.btn_switch_to_customer_settings);
         TextView btnLogout         = view.findViewById(R.id.btn_logout_settings);
 
         viewModel.getStore(currentStoreId).observe(getViewLifecycleOwner(), store -> {
@@ -131,9 +130,6 @@ public class OwnerSettingsFragment extends Fragment {
         rowReviews.setOnClickListener(comingSoon);
         rowPolicy.setOnClickListener(comingSoon);
         rowHelp.setOnClickListener(v -> startActivity(new Intent(requireContext(), EditProfileActivity.class)));
-
-        btnSwitchCustomer.setOnClickListener(v ->
-                ((StoreOwnerActivity) requireActivity()).switchToCustomer());
 
         btnLogout.setOnClickListener(v -> new AlertDialog.Builder(requireContext())
                 .setTitle("Đăng xuất")

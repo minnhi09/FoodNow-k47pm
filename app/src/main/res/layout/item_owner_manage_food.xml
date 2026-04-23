@@ -143,7 +143,7 @@
                 android:layout_weight="2"
                 android:background="@drawable/bg_food_action_green"
                 android:gravity="center"
-                android:text="👁 Đang bán"
+                android:text="Đang bán"
                 android:textColor="#388E3C"
                 android:textSize="12sp" />
 
@@ -156,7 +156,7 @@
                 android:layout_weight="2"
                 android:background="@drawable/bg_food_action_orange"
                 android:gravity="center"
-                android:text="✏ Sửa"
+                android:text="Sửa"
                 android:textColor="#FF6B35"
                 android:textSize="12sp" />
 

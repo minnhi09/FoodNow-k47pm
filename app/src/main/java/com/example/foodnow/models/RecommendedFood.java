@@ -1,6 +1,8 @@
 package com.example.foodnow.models;
 
-public class RecommendedFood {
+public class
+
+RecommendedFood {
     private final String name;
     private final String storeName;
     private final long price;

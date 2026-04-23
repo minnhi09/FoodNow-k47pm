@@ -1,8 +1,27 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <!-- Base application theme. -->
     <style name="Base.Theme.FoodNow" parent="Theme.Material3.Light.NoActionBar">
-        <!-- Customize your light theme here. -->
-        <!-- <item name="colorPrimary">@color/my_light_primary</item> -->
+        <!-- Màu chủ đề cam — thay thế toàn bộ màu tím mặc định của Material3 -->
+        <item name="colorPrimary">#FF6B35</item>
+        <item name="colorOnPrimary">#FFFFFF</item>
+        <item name="colorPrimaryContainer">#FFF3E0</item>
+        <item name="colorOnPrimaryContainer">#BF360C</item>
+        <item name="colorSecondary">#FF6B35</item>
+        <item name="colorOnSecondary">#FFFFFF</item>
+        <!-- colorSecondaryContainer là màu nền viên thuốc (pill) của bottom nav -->
+        <item name="colorSecondaryContainer">#FFF3E0</item>
+        <item name="colorOnSecondaryContainer">#BF360C</item>
+        <item name="colorTertiary">#FF9800</item>
+        <item name="colorOnTertiary">#FFFFFF</item>
+        <item name="colorTertiaryContainer">#FFF8E1</item>
+        <!-- Bảo đảm widget AppCompat (Switch...) không lấy tím mặc định -->
+        <item name="colorControlActivated">#FF6B35</item>
+        <item name="colorAccent">#FF6B35</item>
+        <item name="android:colorAccent">#FF6B35</item>
+        <!-- Thanh trạng thái (status bar) -->
+        <item name="android:statusBarColor">#FF6B35</item>
+        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
+        <item name="android:windowLightStatusBar" tools:targetApi="m">false</item>
     </style>
 
     <style name="Theme.FoodNow" parent="Base.Theme.FoodNow" />

@@ -4,6 +4,7 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
 import com.example.foodnow.models.Order;
+import com.google.android.gms.tasks.Tasks;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
@@ -57,6 +58,23 @@ public class OrderRepository {
         return db.collection("Orders")
                 .document(orderId)
                 .update("status", newStatus);
+    }
+
+    /** Tạo đơn hàng mới từ phía customer. */
+    public Task<Void> createOrder(Order order) {
+        if (order == null) {
+            return Tasks.forException(new IllegalArgumentException("Order không hợp lệ"));
+        }
+        return db.collection("Orders")
+                .add(order)
+                .continueWithTask(task -> {
+                    if (!task.isSuccessful()) {
+                        throw task.getException() != null
+                                ? task.getException()
+                                : new Exception("Tạo đơn hàng thất bại");
+                    }
+                    return Tasks.forResult(null);
+                });
     }
 
     /**

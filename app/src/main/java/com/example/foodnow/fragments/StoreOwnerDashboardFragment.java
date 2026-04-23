@@ -287,23 +287,8 @@ public class StoreOwnerDashboardFragment extends Fragment {
 
             ((TextView) item.findViewById(R.id.tv_rank)).setText(String.valueOf(i + 1));
             ((TextView) item.findViewById(R.id.tv_food_name)).setText(name);
-            ((TextView) item.findViewById(R.id.tv_food_sold)).setText("Đã bán: " + qty + " suất");
-            ((TextView) item.findViewById(R.id.tv_food_revenue)).setText(currFmt.format((long) rev) + "đ");
-
-            // Trend: nếu xếp hạng 1-2 → Tăng, còn lại → không đổi
-            TextView tvTrend = item.findViewById(R.id.tv_food_trend);
-            if (i < 2) {
-                tvTrend.setText("↑ Tăng");
-                tvTrend.setTextColor(0xFF4CAF50);
-            } else {
-                tvTrend.setText("↓ Giảm");
-                tvTrend.setTextColor(0xFFE53935);
-            }
-
-            ImageView imgFood = item.findViewById(R.id.img_food);
-            if (imageUrl != null && !imageUrl.isEmpty()) {
-                Glide.with(this).load(imageUrl).circleCrop().into(imgFood);
-            }
+            ((TextView) item.findViewById(R.id.tv_food_sold)).setText(String.valueOf(qty));
+            ((TextView) item.findViewById(R.id.tv_food_revenue)).setText(formatRevenue(rev));
 
             container.addView(item);
 
@@ -353,6 +338,15 @@ public class StoreOwnerDashboardFragment extends Fragment {
         long hours = minutes / 60;
         if (hours < 24) return hours + " giờ trước";
         return (hours / 24) + " ngày trước";
+    }
+
+    private String formatRevenue(double amount) {
+        if (amount >= 1_000_000) {
+            return String.format(new Locale("vi", "VN"), "%.1ftr", amount / 1_000_000);
+        } else if (amount >= 1_000) {
+            return String.format(new Locale("vi", "VN"), "%.0fk", amount / 1_000);
+        }
+        return currFmt.format((long) amount) + "đ";
     }
 
 }
