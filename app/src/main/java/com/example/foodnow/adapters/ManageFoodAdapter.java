@@ -5,7 +5,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
-import android.widget.Switch;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -14,7 +13,6 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 import com.example.foodnow.R;
 import com.example.foodnow.models.Food;
-import com.google.android.material.button.MaterialButton;
 
 import java.text.NumberFormat;
 import java.util.ArrayList;
@@ -97,29 +95,25 @@ public class ManageFoodAdapter extends RecyclerView.Adapter<ManageFoodAdapter.Vi
 
         holder.tvTitle.setText(food.getTitle());
         holder.tvPrice.setText(currFmt.format(food.getPrice()) + "đ");
+        holder.tvDescription.setText(food.getDescription() != null ? food.getDescription() : "");
+        holder.tvSold.setText("Đã bán: " + food.getSoldCount());
+        holder.tvCategory.setText(food.getCategoryId() != null ? food.getCategoryId() : "");
 
-        // Badge trạng thái
-        if (food.isAvailable()) {
-            holder.tvAvailable.setText("Đang bán");
-            holder.tvAvailable.setBackgroundColor(0xFF4CAF50);
-        } else {
-            holder.tvAvailable.setText("Tạm ẩn");
-            holder.tvAvailable.setBackgroundColor(0xFF9E9E9E);
-        }
+        // Hot badge nếu soldCount >= 20
+        holder.tvHotBadge.setVisibility(food.getSoldCount() >= 20 ? View.VISIBLE : View.GONE);
 
-        // Toggle switch — tắt listener trước để tránh trigger khi bind
-        holder.switchAvailable.setOnCheckedChangeListener(null);
-        holder.switchAvailable.setChecked(food.isAvailable());
-        holder.switchAvailable.setOnCheckedChangeListener((btn, checked) -> {
-            food.setAvailable(checked);
-            holder.tvAvailable.setText(checked ? "Đang bán" : "Tạm ẩn");
-            holder.tvAvailable.setBackgroundColor(checked ? 0xFF4CAF50 : 0xFF9E9E9E);
-            if (toggleListener != null) toggleListener.onToggle(food, checked);
+        // Toggle trạng thái
+        updateAvailableButton(holder.tvAvailable, food.isAvailable());
+        holder.tvAvailable.setOnClickListener(v -> {
+            boolean newVal = !food.isAvailable();
+            food.setAvailable(newVal);
+            updateAvailableButton(holder.tvAvailable, newVal);
+            if (toggleListener != null) toggleListener.onToggle(food, newVal);
         });
 
         Glide.with(context)
                 .load(food.getImageUrl())
-                .placeholder(R.drawable.ic_launcher_background)
+                .placeholder(R.drawable.bg_image_rounded)
                 .into(holder.imgFood);
 
         holder.btnEdit.setOnClickListener(v -> {
@@ -131,24 +125,38 @@ public class ManageFoodAdapter extends RecyclerView.Adapter<ManageFoodAdapter.Vi
         });
     }
 
+    private void updateAvailableButton(TextView tv, boolean available) {
+        if (available) {
+            tv.setText("👁 Đang bán");
+            tv.setBackgroundResource(R.drawable.bg_food_action_green);
+            tv.setTextColor(0xFF388E3C);
+        } else {
+            tv.setText("🚫 Ẩn món");
+            tv.setBackgroundResource(R.drawable.bg_food_action_grey);
+            tv.setTextColor(0xFF757575);
+        }
+    }
+
     @Override
     public int getItemCount() { return filtered.size(); }
 
     static class ViewHolder extends RecyclerView.ViewHolder {
-        ImageView    imgFood;
-        TextView     tvTitle, tvPrice, tvAvailable;
-        Switch       switchAvailable;
-        MaterialButton btnEdit, btnDelete;
+        ImageView  imgFood;
+        TextView   tvTitle, tvPrice, tvDescription, tvSold, tvCategory, tvAvailable, tvHotBadge;
+        TextView   btnEdit, btnDelete;
 
         ViewHolder(@NonNull View itemView) {
             super(itemView);
-            imgFood         = itemView.findViewById(R.id.img_food);
-            tvTitle         = itemView.findViewById(R.id.tv_food_title);
-            tvPrice         = itemView.findViewById(R.id.tv_food_price);
-            tvAvailable     = itemView.findViewById(R.id.tv_available);
-            switchAvailable = itemView.findViewById(R.id.switch_available);
-            btnEdit         = itemView.findViewById(R.id.btn_edit);
-            btnDelete       = itemView.findViewById(R.id.btn_delete);
+            imgFood        = itemView.findViewById(R.id.img_food);
+            tvTitle        = itemView.findViewById(R.id.tv_food_title);
+            tvPrice        = itemView.findViewById(R.id.tv_food_price);
+            tvDescription  = itemView.findViewById(R.id.tv_food_description);
+            tvSold         = itemView.findViewById(R.id.tv_food_sold);
+            tvCategory     = itemView.findViewById(R.id.tv_food_category);
+            tvAvailable    = itemView.findViewById(R.id.tv_available);
+            tvHotBadge     = itemView.findViewById(R.id.tv_hot_badge);
+            btnEdit        = itemView.findViewById(R.id.btn_edit);
+            btnDelete      = itemView.findViewById(R.id.btn_delete);
         }
     }
 }

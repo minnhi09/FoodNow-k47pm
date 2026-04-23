@@ -35,6 +35,7 @@
             android:windowSoftInputMode="adjustResize" />
         <activity android:name=".activities.FoodDetailActivity" />
         <activity android:name=".activities.EditProfileActivity" />
+        <activity android:name=".activities.EditStoreActivity" />
     </application>
 
 </manifest>

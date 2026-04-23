@@ -10,6 +10,7 @@ import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class StoreRepository {
 
@@ -65,5 +66,15 @@ public class StoreRepository {
     /** Cập nhật thông tin quán (trả về Task để biết khi nào xong) */
     public Task<Void> updateStore(String storeId, Store store) {
         return db.collection("Stores").document(storeId).set(store);
+    }
+
+    /** Cập nhật chỉ field imageUrl (partial update, không ghi đè toàn document) */
+    public Task<Void> updateStoreImageUrl(String storeId, String imageUrl) {
+        return db.collection("Stores").document(storeId).update("imageUrl", imageUrl);
+    }
+
+    /** Cập nhật nhiều field cùng lúc (partial update) */
+    public Task<Void> updateStoreFields(String storeId, Map<String, Object> fields) {
+        return db.collection("Stores").document(storeId).update(fields);
     }
 }

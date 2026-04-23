@@ -27,7 +27,6 @@ import com.example.foodnow.adapters.ManageFoodAdapter;
 import com.example.foodnow.models.Food;
 import com.example.foodnow.repositories.FoodRepository;
 import com.example.foodnow.viewmodels.StoreOwnerViewModel;
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -67,7 +66,7 @@ public class ManageFoodsFragment extends Fragment {
         EditText         etSearch    = view.findViewById(R.id.et_search_food);
         LinearLayout     chipGroup   = view.findViewById(R.id.chip_group_categories);
         TextView         chipAll     = view.findViewById(R.id.chip_all);
-        FloatingActionButton fab     = view.findViewById(R.id.fab_add_food);
+        TextView         btnAdd      = view.findViewById(R.id.btn_add_food);
 
         // Setup adapter
         adapter = new ManageFoodAdapter(
@@ -137,8 +136,8 @@ public class ManageFoodsFragment extends Fragment {
             if (msg != null) Toast.makeText(requireContext(), msg, Toast.LENGTH_SHORT).show();
         });
 
-        // FAB → thêm mới
-        fab.setOnClickListener(v -> {
+        // Thêm mới
+        btnAdd.setOnClickListener(v -> {
             Intent intent = new Intent(requireContext(), AddEditFoodActivity.class);
             intent.putExtra("storeId", storeId);
             startActivity(intent);

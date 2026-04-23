@@ -84,6 +84,15 @@
                     android:textColor="#FFFFFF"
                     android:textSize="11sp" />
 
+                <!-- ProgressBar hiện khi đang upload ảnh bìa -->
+                <ProgressBar
+                    android:id="@+id/progress_cover_upload"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_centerInParent="true"
+                    android:indeterminateTint="#FFFFFF"
+                    android:visibility="gone" />
+
                 <!-- Overlay row: avatar + store name + rating + edit icon -->
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -181,11 +190,13 @@
                 android:layout_height="wrap_content"
                 android:orientation="vertical">
 
-                <!-- Row: Tên cửa hàng -->
+                <!-- Row: Tên cửa hàng (chỉ đọc - chỉnh sửa qua icon cây bút) -->
                 <LinearLayout
                     android:id="@+id/row_store_name"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:clickable="false"
+                    android:focusable="false"
                     android:gravity="center_vertical"
                     android:orientation="horizontal"
                     android:padding="16dp">
@@ -220,19 +231,17 @@
                             android:textSize="14sp"
                             android:textStyle="bold" />
                     </LinearLayout>
-                    <ImageView
-                        android:layout_width="20dp"
-                        android:layout_height="20dp"
-                        android:src="@drawable/ic_chevron_right" />
                 </LinearLayout>
 
                 <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#F0F0F0" android:layout_marginStart="68dp" />
 
-                <!-- Row: Địa chỉ -->
+                <!-- Row: Địa chỉ (chỉ đọc) -->
                 <LinearLayout
                     android:id="@+id/row_store_address"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:clickable="false"
+                    android:focusable="false"
                     android:gravity="center_vertical"
                     android:orientation="horizontal"
                     android:padding="16dp">
@@ -266,19 +275,17 @@
                             android:textColor="#212121"
                             android:textSize="14sp" />
                     </LinearLayout>
-                    <ImageView
-                        android:layout_width="20dp"
-                        android:layout_height="20dp"
-                        android:src="@drawable/ic_chevron_right" />
                 </LinearLayout>
 
                 <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#F0F0F0" android:layout_marginStart="68dp" />
 
-                <!-- Row: Số điện thoại -->
+                <!-- Row: Số điện thoại (chỉ đọc) -->
                 <LinearLayout
                     android:id="@+id/row_store_phone"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:clickable="false"
+                    android:focusable="false"
                     android:gravity="center_vertical"
                     android:orientation="horizontal"
                     android:padding="16dp">
@@ -312,19 +319,17 @@
                             android:textColor="#212121"
                             android:textSize="14sp" />
                     </LinearLayout>
-                    <ImageView
-                        android:layout_width="20dp"
-                        android:layout_height="20dp"
-                        android:src="@drawable/ic_chevron_right" />
                 </LinearLayout>
 
                 <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#F0F0F0" android:layout_marginStart="68dp" />
 
-                <!-- Row: Mô tả -->
+                <!-- Row: Mô tả (chỉ đọc) -->
                 <LinearLayout
                     android:id="@+id/row_store_desc"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:clickable="false"
+                    android:focusable="false"
                     android:gravity="center_vertical"
                     android:orientation="horizontal"
                     android:padding="16dp">
@@ -360,10 +365,6 @@
                             android:textColor="#212121"
                             android:textSize="14sp" />
                     </LinearLayout>
-                    <ImageView
-                        android:layout_width="20dp"
-                        android:layout_height="20dp"
-                        android:src="@drawable/ic_chevron_right" />
                 </LinearLayout>
 
             </LinearLayout>

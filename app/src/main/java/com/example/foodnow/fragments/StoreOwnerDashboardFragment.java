@@ -19,6 +19,7 @@ import com.example.foodnow.R;
 import com.example.foodnow.activities.StoreOwnerActivity;
 import com.example.foodnow.models.Order;
 import com.example.foodnow.models.OrderItem;
+import com.example.foodnow.repositories.UserRepository;
 import com.example.foodnow.viewmodels.StoreOwnerViewModel;
 
 import java.text.NumberFormat;
@@ -89,18 +90,25 @@ public class StoreOwnerDashboardFragment extends Fragment {
             switchOpen.setChecked(store.isOpen());
             updateOpenStatusUI(tvOpenStatus, tvOpenHint, store.isOpen());
 
-            Glide.with(this)
-                    .load(store.getImageUrl())
-                    .placeholder(R.drawable.ic_launcher_background)
-                    .circleCrop()
-                    .into(imgCover);
-
             switchOpen.setOnCheckedChangeListener((btn, isChecked) -> {
                 store.setOpen(isChecked);
                 updateOpenStatusUI(tvOpenStatus, tvOpenHint, isChecked);
                 new com.example.foodnow.repositories.StoreRepository()
                         .updateStore(storeId, store);
             });
+        });
+
+        // Load avatar chủ cửa hàng (user hiện tại) vào ảnh tròn trên header
+        new UserRepository().getCurrentUser().observe(getViewLifecycleOwner(), user -> {
+            if (user == null) return;
+            String avatarUrl = user.getImageUrl();
+            if (avatarUrl != null && !avatarUrl.isEmpty()) {
+                Glide.with(this)
+                        .load(avatarUrl)
+                        .placeholder(R.drawable.ic_launcher_background)
+                        .circleCrop()
+                        .into(imgCover);
+            }
         });
 
         // ── Đơn hàng — stat cards + recent list + top foods ──
