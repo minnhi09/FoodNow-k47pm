@@ -49,6 +49,7 @@ public class CartAdapter extends RecyclerView.Adapter<CartAdapter.CartViewHolder
         CartItem cartItem = cartList.get(position);
 
         holder.tvCartFoodName.setText(cartItem.getTitle());
+        holder.tvStoreName.setText(cartItem.getStoreName());
         holder.tvCartFoodPrice.setText(numberFormat.format(cartItem.getPrice()) + "đ");
         holder.tvCartQuantity.setText(String.valueOf(cartItem.getQuantity()));
 
@@ -58,21 +59,28 @@ public class CartAdapter extends RecyclerView.Adapter<CartAdapter.CartViewHolder
                 .into(holder.imgCartFood);
 
         holder.btnPlus.setOnClickListener(v -> {
-            CartItem increaseItem = new CartItem(
-                    cartItem.getFoodId(),
-                    cartItem.getTitle(),
-                    cartItem.getPrice(),
-                    1,
-                    cartItem.getImageUrl(),
-                    cartItem.getStoreId(),
-                    cartItem.getStoreName()
-            );
-            CartManager.getInstance().addItem(increaseItem);
+            // Tăng số lượng trực tiếp trong CartItem hiện tại
+            cartItem.setQuantity(cartItem.getQuantity() + 1);
+            notifyItemChanged(holder.getBindingAdapterPosition());
             listener.onQuantityChanged();
         });
 
         holder.btnMinus.setOnClickListener(v -> {
-            CartManager.getInstance().removeItem(cartItem.getFoodId());
+            int pos = holder.getBindingAdapterPosition();
+            if (cartItem.getQuantity() > 1) {
+                cartItem.setQuantity(cartItem.getQuantity() - 1);
+                notifyItemChanged(pos);
+            } else {
+                CartManager.getInstance().removeItem(cartItem.getFoodId());
+                notifyItemRemoved(pos);
+            }
+            listener.onQuantityChanged();
+        });
+
+        holder.btnRemove.setOnClickListener(v -> {
+            int pos = holder.getBindingAdapterPosition();
+            CartManager.getInstance().removeItemFully(cartItem.getFoodId());
+            notifyItemRemoved(pos);
             listener.onQuantityChanged();
         });
     }
@@ -83,8 +91,8 @@ public class CartAdapter extends RecyclerView.Adapter<CartAdapter.CartViewHolder
     }
 
     static class CartViewHolder extends RecyclerView.ViewHolder {
-        final ImageView imgCartFood;
-        final TextView tvCartFoodName;
+        final ImageView imgCartFood, btnRemove;
+        final TextView tvCartFoodName, tvStoreName;
         final TextView tvCartFoodPrice;
         final TextView btnMinus;
         final TextView tvCartQuantity;
@@ -93,7 +101,9 @@ public class CartAdapter extends RecyclerView.Adapter<CartAdapter.CartViewHolder
         CartViewHolder(@NonNull View itemView) {
             super(itemView);
             imgCartFood = itemView.findViewById(R.id.img_cart_food);
+            btnRemove = itemView.findViewById(R.id.btn_remove);
             tvCartFoodName = itemView.findViewById(R.id.tv_cart_food_name);
+            tvStoreName = itemView.findViewById(R.id.tv_cart_store_name);
             tvCartFoodPrice = itemView.findViewById(R.id.tv_cart_food_price);
             btnMinus = itemView.findViewById(R.id.btn_minus);
             tvCartQuantity = itemView.findViewById(R.id.tv_cart_quantity);

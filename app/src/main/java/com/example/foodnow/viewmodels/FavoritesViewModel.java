@@ -16,6 +16,8 @@ public class FavoritesViewModel extends ViewModel {
 
     private final FavoriteRepository favoriteRepository;
     private final LiveData<List<Favorite>> favorites;
+    private final MutableLiveData<Boolean> isItemFavorited = new MutableLiveData<>(false);
+    private final MutableLiveData<String> currentFavoriteId = new MutableLiveData<>("");
 
     public FavoritesViewModel() {
         favoriteRepository = new FavoriteRepository();
@@ -34,6 +36,26 @@ public class FavoritesViewModel extends ViewModel {
 
     public LiveData<List<Favorite>> getFavorites() {
         return favorites;
+    }
+
+    public LiveData<Boolean> getItemFavoritedLiveData() {
+        return isItemFavorited;
+    }
+
+    public LiveData<String> getCurrentFavoriteIdLiveData() {
+        return currentFavoriteId;
+    }
+
+    public void checkFavorite(String userId, String itemId, String type) {
+        favoriteRepository.checkFavorite(userId, itemId, type, (isFavorited, id) -> {
+            isItemFavorited.setValue(isFavorited);
+            currentFavoriteId.setValue(id);
+        });
+    }
+
+    public void addFavorite(String userId, String type, String itemId, String name, String imageUrl) {
+        Favorite favorite = new Favorite(null, userId, type, itemId, name, imageUrl);
+        favoriteRepository.addFavorite(favorite);
     }
 
     public void removeFavorite(String favoriteId) {

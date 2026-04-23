@@ -42,11 +42,33 @@ public class FavoriteRepository {
         return liveData;
     }
 
+    public void checkFavorite(String userId, String itemId, String type, FavoriteCheckCallback callback) {
+        db.collection("Favorites")
+                .whereEqualTo("userId", userId)
+                .whereEqualTo("itemId", itemId)
+                .whereEqualTo("type", type)
+                .addSnapshotListener((snapshots, error) -> {
+                    if (error != null) {
+                        return;
+                    }
+                    if (snapshots != null && !snapshots.isEmpty()) {
+                        String id = snapshots.getDocuments().get(0).getId();
+                        callback.onResult(true, id);
+                    } else {
+                        callback.onResult(false, null);
+                    }
+                });
+    }
+
     public Task<DocumentReference> addFavorite(Favorite favorite) {
         return db.collection("Favorites").add(favorite);
     }
 
     public Task<Void> removeFavorite(String favoriteId) {
         return db.collection("Favorites").document(favoriteId).delete();
+    }
+
+    public interface FavoriteCheckCallback {
+        void onResult(boolean isFavorited, String id);
     }
 }

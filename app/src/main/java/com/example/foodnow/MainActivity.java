@@ -11,11 +11,14 @@ import com.example.foodnow.fragments.FavoritesFragment;
 import com.example.foodnow.fragments.HomeFragment;
 import com.example.foodnow.fragments.OrdersFragment;
 import com.example.foodnow.fragments.ProfileFragment;
+import com.example.foodnow.utils.CartManager;
 import com.example.foodnow.utils.CloudinaryHelper;
 import com.google.android.material.badge.BadgeDrawable;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 public class MainActivity extends AppCompatActivity {
+
+    private BottomNavigationView bottomNav;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -27,7 +30,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         // ① Tìm BottomNavigationView
-        BottomNavigationView bottomNav = findViewById(R.id.bottom_navigation);
+        bottomNav = findViewById(R.id.bottom_navigation);
 
         setupCartBadge(bottomNav);
 
@@ -58,6 +61,12 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        refreshCartBadge();
+    }
+
     // Hàm tiện ích: đặt Fragment vào fragment_container
     private boolean loadFragment(Fragment fragment) {
         if (fragment != null) {
@@ -72,9 +81,22 @@ public class MainActivity extends AppCompatActivity {
 
     private void setupCartBadge(BottomNavigationView bottomNav) {
         BadgeDrawable badgeDrawable = bottomNav.getOrCreateBadge(R.id.nav_cart);
-        badgeDrawable.setVisible(true);
-        badgeDrawable.setNumber(3);
         badgeDrawable.setBackgroundColor(ContextCompat.getColor(this, R.color.home_primary_orange));
         badgeDrawable.setBadgeTextColor(ContextCompat.getColor(this, R.color.white));
+        refreshCartBadge();
+    }
+
+    public void refreshCartBadge() {
+        if (bottomNav == null) return;
+        
+        BadgeDrawable badgeDrawable = bottomNav.getOrCreateBadge(R.id.nav_cart);
+        int cartCount = CartManager.getInstance().getItemCount();
+        
+        if (cartCount > 0) {
+            badgeDrawable.setVisible(true);
+            badgeDrawable.setNumber(cartCount);
+        } else {
+            badgeDrawable.setVisible(false);
+        }
     }
 }

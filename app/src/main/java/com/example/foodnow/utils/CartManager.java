@@ -48,11 +48,13 @@ public class CartManager {
 
         for (CartItem existingItem : items) {
             if (Objects.equals(existingItem.getFoodId(), item.getFoodId())) {
-                existingItem.setQuantity(existingItem.getQuantity() + item.getQuantity());
+                existingItem.setQuantity(existingItem.getQuantity() + 1);
                 return;
             }
         }
 
+        // Nếu là món mới, đảm bảo số lượng ban đầu là 1
+        item.setQuantity(1);
         items.add(item);
     }
 
@@ -69,6 +71,13 @@ public class CartManager {
             }
         }
 
+        if (items.isEmpty()) {
+            clearCart();
+        }
+    }
+
+    public synchronized void removeItemFully(String foodId) {
+        items.removeIf(item -> Objects.equals(item.getFoodId(), foodId));
         if (items.isEmpty()) {
             clearCart();
         }

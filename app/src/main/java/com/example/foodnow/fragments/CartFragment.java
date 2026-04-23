@@ -5,8 +5,6 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -15,79 +13,114 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.foodnow.MainActivity;
 import com.example.foodnow.R;
 import com.example.foodnow.activities.CheckoutActivity;
 import com.example.foodnow.adapters.CartAdapter;
-import com.example.foodnow.models.CartItem;
 import com.example.foodnow.utils.CartManager;
 
 import java.text.NumberFormat;
-import java.util.List;
 import java.util.Locale;
 
 public class CartFragment extends Fragment {
 
-    private TextView tvCartStoreName;
     private RecyclerView rvCart;
-    private TextView tvCartEmpty;
-    private LinearLayout layoutCartFooter;
-    private TextView tvSubtotal;
-    private Button btnCheckout;
-
-    private CartAdapter adapter;
-    private List<CartItem> cartList;
-    private NumberFormat numberFormat;
+    private TextView tvCartCountHeader, tvSubtotal, tvDeliveryFee, tvTotal, tvTotalButton, tvEmpty;
+    private View btnCheckout, layoutPaymentDetails, cardPromo, cardPaymentMethod;
+    private final NumberFormat nf = NumberFormat.getInstance(new Locale("vi", "VN"));
 
     @Nullable
     @Override
-    public View onCreateView(@NonNull LayoutInflater inflater,
-                             @Nullable ViewGroup container,
-                             @Nullable Bundle savedInstanceState) {
+    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         return inflater.inflate(R.layout.fragment_cart, container, false);
     }
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-
-        tvCartStoreName = view.findViewById(R.id.tv_cart_store_name);
+        
         rvCart = view.findViewById(R.id.rv_cart);
-        tvCartEmpty = view.findViewById(R.id.tv_cart_empty);
-        layoutCartFooter = view.findViewById(R.id.layout_cart_footer);
+        tvCartCountHeader = view.findViewById(R.id.tv_cart_count_header);
         tvSubtotal = view.findViewById(R.id.tv_subtotal);
+        tvDeliveryFee = view.findViewById(R.id.tv_delivery_fee);
+        tvTotal = view.findViewById(R.id.tv_total);
+        tvTotalButton = view.findViewById(R.id.tv_total_button);
+        tvEmpty = view.findViewById(R.id.tv_cart_empty);
         btnCheckout = view.findViewById(R.id.btn_checkout);
+        layoutPaymentDetails = view.findViewById(R.id.layout_payment_details);
+        cardPromo = view.findViewById(R.id.card_promo);
+        cardPaymentMethod = view.findViewById(R.id.card_payment_method);
 
-        numberFormat = NumberFormat.getInstance(new Locale("vi", "VN"));
+        rvCart.setLayoutManager(new LinearLayoutManager(getContext()));
+        
+        btnCheckout.setOnClickListener(v -> {
+            if (!CartManager.getInstance().getItems().isEmpty()) {
+                startActivity(new Intent(getContext(), CheckoutActivity.class));
+            }
+        });
 
-        cartList = CartManager.getInstance().getItems();
-        adapter = new CartAdapter(requireContext(), cartList, this::updateCartUI);
-
-        rvCart.setLayoutManager(new LinearLayoutManager(requireContext()));
-        rvCart.setAdapter(adapter);
-
-        btnCheckout.setOnClickListener(v ->
-                startActivity(new Intent(getContext(), CheckoutActivity.class))
-        );
-
-        updateCartUI();
+        updateUI();
     }
 
-    private void updateCartUI() {
-        adapter.notifyDataSetChanged();
+    @Override
+    public void onResume() {
+        super.onResume();
+        updateUI();
+    }
 
-        String storeName = CartManager.getInstance().getCurrentStoreName();
-        if (storeName == null || storeName.trim().isEmpty()) {
-            tvCartStoreName.setText("Chưa chọn quán");
+    private void updateUI() {
+        CartManager cart = CartManager.getInstance();
+        int count = cart.getItemCount();
+        
+        tvCartCountHeader.setText(getString(R.string.cart_item_count_format, count));
+        
+        if (cart.getItems().isEmpty()) {
+            tvEmpty.setVisibility(View.VISIBLE);
+            rvCart.setVisibility(View.GONE);
+            layoutPaymentDetails.setVisibility(View.GONE);
+            cardPromo.setVisibility(View.GONE);
+            cardPaymentMethod.setVisibility(View.GONE);
+            btnCheckout.setVisibility(View.GONE);
         } else {
-            tvCartStoreName.setText(storeName);
+            tvEmpty.setVisibility(View.GONE);
+            rvCart.setVisibility(View.VISIBLE);
+            layoutPaymentDetails.setVisibility(View.VISIBLE);
+            cardPromo.setVisibility(View.VISIBLE);
+            cardPaymentMethod.setVisibility(View.VISIBLE);
+            btnCheckout.setVisibility(View.VISIBLE);
+
+            CartAdapter adapter = new CartAdapter(getContext(), cart.getItems(), this::updatePrices);
+            rvCart.setAdapter(adapter);
+            updatePrices();
+        }
+        refreshCartBadge();
+    }
+
+    private void updatePrices() {
+        CartManager cart = CartManager.getInstance();
+        if (cart.getItems().isEmpty()) {
+            updateUI();
+            return;
         }
 
-        long subtotal = CartManager.getInstance().getSubtotal();
-        tvSubtotal.setText("Tạm tính: " + numberFormat.format(subtotal) + "đ");
+        long subtotalValue = cart.getSubtotal();
+        long deliveryFeeValue = 15000L; // Phí ship cố định
+        long totalValue = subtotalValue + deliveryFeeValue;
 
-        boolean isEmpty = CartManager.getInstance().getItems().isEmpty();
-        tvCartEmpty.setVisibility(isEmpty ? View.VISIBLE : View.GONE);
-        rvCart.setVisibility(isEmpty ? View.GONE : View.VISIBLE);
-        layoutCartFooter.setVisibility(isEmpty ? View.GONE : View.VISIBLE);
+        tvSubtotal.setText(nf.format(subtotalValue) + "đ");
+        tvDeliveryFee.setText(nf.format(deliveryFeeValue) + "đ");
+        tvTotal.setText(nf.format(totalValue) + "đ");
+        tvTotalButton.setText(nf.format(totalValue) + "đ");
+        
+        int count = cart.getItemCount();
+        tvCartCountHeader.setText(getString(R.string.cart_item_count_format, count));
+        
+        refreshCartBadge();
+    }
+
+    private void refreshCartBadge() {
+        if (getActivity() instanceof MainActivity) {
+            ((MainActivity) getActivity()).refreshCartBadge();
+        }
     }
 }

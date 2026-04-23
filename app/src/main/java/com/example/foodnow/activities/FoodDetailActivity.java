@@ -1,18 +1,26 @@
 package com.example.foodnow.activities;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.example.foodnow.R;
 import com.example.foodnow.adapters.ReviewAdapter;
+import com.example.foodnow.models.CartItem;
 import com.example.foodnow.models.Review;
+import com.example.foodnow.utils.CartManager;
+import com.example.foodnow.viewmodels.FavoritesViewModel;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 
 import java.text.NumberFormat;
 import java.util.ArrayList;
@@ -35,6 +43,15 @@ public class FoodDetailActivity extends AppCompatActivity {
     private int quantity = 1;
     private long unitPrice = 0L;
     private boolean isFavorite = false;
+    private String currentFavoriteId = "";
+    private String foodId = "";
+    private String foodTitle = "";
+    private String foodImageUrl = "";
+    private String storeId = "";
+    private String storeName = "";
+
+    private FavoritesViewModel favoritesViewModel;
+
     private final NumberFormat currencyFormatter =
             NumberFormat.getInstance(new Locale("vi", "VN"));
 
@@ -45,6 +62,7 @@ public class FoodDetailActivity extends AppCompatActivity {
 
         bindViews();
         receiveIntentData();
+        setupFavoritesObservers();
         setupQuantityControls();
         setupFavoriteButton();
         setupOrderButtons();
@@ -76,20 +94,22 @@ public class FoodDetailActivity extends AppCompatActivity {
 
     // ── ② Nhận dữ liệu từ Intent extras ──────────────────
     private void receiveIntentData() {
-        String foodTitle       = getIntent().getStringExtra("foodTitle");
+        foodId                 = safeValue(getIntent().getStringExtra("foodId"));
+        foodTitle              = safeValue(getIntent().getStringExtra("foodTitle"));
         String foodDescription = getIntent().getStringExtra("foodDescription");
-        String foodImageUrl    = getIntent().getStringExtra("foodImageUrl");
+        foodImageUrl           = safeValue(getIntent().getStringExtra("foodImageUrl"));
         float  foodRating      = getIntent().getFloatExtra("foodRating", 0f);
         unitPrice              = getIntent().getLongExtra("foodPrice", 0L);
 
-        String storeName       = getIntent().getStringExtra("storeName");
+        storeId                = safeValue(getIntent().getStringExtra("storeId"));
+        storeName              = safeValue(getIntent().getStringExtra("storeName"));
         String storeTime       = getIntent().getStringExtra("storeDeliveryTime");
 
         // Hiển thị dữ liệu cơ bản
-        tvTitle.setText(foodTitle != null ? foodTitle : "Món ăn");
+        tvTitle.setText(foodTitle.isEmpty() ? "Món ăn" : foodTitle);
         tvDescription.setText(foodDescription != null ? foodDescription : "");
         tvRating.setText(String.format(Locale.US, "%.1f", foodRating));
-        tvStoreName.setText(storeName != null ? storeName : "Nhà hàng");
+        tvStoreName.setText(storeName.isEmpty() ? "Nhà hàng" : storeName);
         tvStoreDeliveryTime.setText(storeTime != null ? storeTime : "20-30 phút");
 
         // Giá
@@ -119,6 +139,26 @@ public class FoodDetailActivity extends AppCompatActivity {
         updateOrderButtonText();
     }
 
+    private void setupFavoritesObservers() {
+        favoritesViewModel = new ViewModelProvider(this).get(FavoritesViewModel.class);
+
+        favoritesViewModel.getItemFavoritedLiveData().observe(this, favorited -> {
+            isFavorite = Boolean.TRUE.equals(favorited);
+            applyFavoriteUi();
+        });
+
+        favoritesViewModel.getCurrentFavoriteIdLiveData().observe(this, favoriteId -> {
+            currentFavoriteId = favoriteId == null ? "" : favoriteId;
+        });
+
+        String userId = getCurrentUserId();
+        if (!userId.isEmpty() && !foodId.isEmpty()) {
+            favoritesViewModel.checkFavorite(userId, foodId, "food");
+        } else {
+            applyFavoriteUi();
+        }
+    }
+
     // ── ③ Điều khiển số lượng [−][n][+] ──────────────────
     private void setupQuantityControls() {
         btnDecrease.setOnClickListener(v -> {
@@ -142,32 +182,34 @@ public class FoodDetailActivity extends AppCompatActivity {
         btnOrder.setText("Đặt · " + currencyFormatter.format(total) + "đ");
     }
 
-    // ── ④ Nút yêu thích (toggle UI only) ─────────────────
+    // ── ④ Nút yêu thích ──────────────────────────────────
     private void setupFavoriteButton() {
         btnFavorite.setOnClickListener(v -> {
-            isFavorite = !isFavorite;
-            ivFavoriteIcon.setImageResource(
-                    isFavorite ? android.R.drawable.btn_star_big_on
-                               : android.R.drawable.btn_star_big_off);
-            int tintColor = isFavorite ? R.color.home_badge_red : R.color.home_primary_orange;
-            ivFavoriteIcon.setColorFilter(getColor(tintColor));
-            Toast.makeText(this,
-                    isFavorite ? "Đã thêm vào yêu thích" : "Đã bỏ yêu thích",
-                    Toast.LENGTH_SHORT).show();
+            String userId = getCurrentUserId();
+            if (userId.isEmpty()) {
+                Toast.makeText(this, "Vui lòng đăng nhập", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            if (isFavorite) {
+                if (!currentFavoriteId.isEmpty()) {
+                    favoritesViewModel.removeFavorite(currentFavoriteId);
+                    Toast.makeText(this, "Đã xóa khỏi yêu thích", Toast.LENGTH_SHORT).show();
+                }
+            } else {
+                favoritesViewModel.addFavorite(userId, "food", foodId, foodTitle, foodImageUrl);
+                Toast.makeText(this, "Đã thêm vào yêu thích", Toast.LENGTH_SHORT).show();
+            }
         });
     }
 
-    // ── ⑤ Nút "Giỏ hàng" và "Đặt" ── Toast (chờ TV3) ────
+    // ── ⑤ Nút "Giỏ hàng" và "Đặt" ───────────────────────
     private void setupOrderButtons() {
-        btnAddToCart.setOnClickListener(v ->
-                Toast.makeText(this,
-                        "Đã thêm vào giỏ hàng!",
-                        Toast.LENGTH_SHORT).show());
+        btnAddToCart.setOnClickListener(v -> addCurrentFoodToCart(quantity, null));
 
-        btnOrder.setOnClickListener(v ->
-                Toast.makeText(this,
-                        "Đặt " + quantity + " món — chức năng sắp ra mắt!",
-                        Toast.LENGTH_SHORT).show());
+        btnOrder.setOnClickListener(v -> 
+                addCurrentFoodToCart(quantity, () -> 
+                        startActivity(new Intent(this, CheckoutActivity.class))));
     }
 
     // ── ⑥ Mock reviews — chưa có Firestore collection ────
@@ -185,5 +227,64 @@ public class FoodDetailActivity extends AppCompatActivity {
         rvReviews.setLayoutManager(new LinearLayoutManager(this));
         rvReviews.setNestedScrollingEnabled(false);
         rvReviews.setAdapter(new ReviewAdapter(this, reviews));
+    }
+
+    private void addCurrentFoodToCart(int addQuantity, Runnable onAdded) {
+        if (foodId.isEmpty() || storeId.isEmpty()) {
+            Toast.makeText(this, "Thông tin cửa hàng không hợp lệ", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        CartManager cartManager = CartManager.getInstance();
+        
+        CartItem cartItem = new CartItem(
+                foodId,
+                foodTitle,
+                unitPrice,
+                1,
+                foodImageUrl,
+                storeId,
+                storeName
+        );
+
+        Runnable addAction = () -> {
+            for (int i = 0; i < addQuantity; i++) {
+                cartManager.addItem(cartItem);
+            }
+            Toast.makeText(this, "Đã thêm " + foodTitle + " vào giỏ hàng", Toast.LENGTH_SHORT).show();
+            if (onAdded != null) {
+                onAdded.run();
+            }
+        };
+
+        if (cartManager.isFromDifferentStore(storeId)) {
+            new AlertDialog.Builder(this)
+                    .setTitle("Xác nhận thay đổi")
+                    .setMessage("Bạn đang chọn món ở cửa hàng khác. Bạn có muốn xóa giỏ hàng hiện tại không?")
+                    .setNegativeButton("Hủy", (dialog, which) -> dialog.dismiss())
+                    .setPositiveButton("Đồng ý", (dialog, which) -> {
+                        cartManager.clearCart();
+                        addAction.run();
+                    })
+                    .show();
+            return;
+        }
+
+        addAction.run();
+    }
+
+    private void applyFavoriteUi() {
+        ivFavoriteIcon.setImageResource(isFavorite ? R.drawable.ic_heart_filled : R.drawable.ic_heart_outline);
+        // Không cần setColorFilter vì icon đã có màu trong vector
+        ivFavoriteIcon.setColorFilter(null);
+    }
+
+    private String getCurrentUserId() {
+        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+        return currentUser == null ? "" : currentUser.getUid();
+    }
+
+    private String safeValue(String value) {
+        return value == null ? "" : value;
     }
 }
