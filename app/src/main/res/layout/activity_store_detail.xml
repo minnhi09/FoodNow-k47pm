@@ -40,6 +40,19 @@
                 app:layout_collapseMode="pin"
                 app:tint="@color/home_text_primary" />
 
+            <!-- Nút yêu thích -->
+            <ImageView
+                android:id="@+id/btn_favorite"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_gravity="top|end"
+                android:layout_margin="12dp"
+                android:background="@drawable/bg_home_rating_chip"
+                android:padding="8dp"
+                android:src="@drawable/ic_nav_favorite"
+                app:layout_collapseMode="pin"
+                app:tint="@color/white" />
+
         </com.google.android.material.appbar.CollapsingToolbarLayout>
 
         <!-- Thông tin quán -->

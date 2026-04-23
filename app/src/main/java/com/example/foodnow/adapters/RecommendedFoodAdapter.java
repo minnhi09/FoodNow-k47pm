@@ -72,11 +72,11 @@ public class RecommendedFoodAdapter extends RecyclerView.Adapter<RecommendedFood
             Intent intent = new Intent(context, FoodDetailActivity.class);
             intent.putExtra("foodId",    food.getId());
             intent.putExtra("foodTitle", food.getTitle());
-            intent.putExtra("foodImage", food.getImageUrl());
+            intent.putExtra("foodImageUrl", food.getImageUrl());
             intent.putExtra("foodPrice", food.getPrice());
             intent.putExtra("foodRating", food.getRating());
             intent.putExtra("foodDescription", food.getDescription());
-            intent.putExtra("storeId",   food.getStoreId());
+            intent.putExtra("foodStoreId", food.getStoreId());
             intent.putExtra("storeName", storeNames.getOrDefault(food.getStoreId(), ""));
             context.startActivity(intent);
         };

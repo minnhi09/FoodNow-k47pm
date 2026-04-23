@@ -16,8 +16,11 @@ import com.bumptech.glide.Glide;
 import com.example.foodnow.R;
 import com.example.foodnow.adapters.FoodAdapter;
 import com.example.foodnow.models.Food;
-import com.example.foodnow.utils.CartManager;
+import com.example.foodnow.models.Favorite;
+import com.example.foodnow.repositories.FavoriteRepository;
+import com.google.firebase.auth.FirebaseAuth;
 import com.example.foodnow.viewmodels.StoreDetailViewModel;
+import com.example.foodnow.utils.CartManager;
 
 import java.text.NumberFormat;
 import java.util.ArrayList;
@@ -31,11 +34,17 @@ public class StoreDetailActivity extends AppCompatActivity {
 
     private ImageView imgStore;
     private ImageView btnBack;
+    private ImageView btnFavorite;
     private TextView tvName, tvRating, tvTime, tvFee;
     private RecyclerView rvFoods;
 
     private FoodAdapter foodAdapter;
     private final List<Food> foodList = new ArrayList<>();
+
+    // Favorite
+    private FavoriteRepository favoriteRepository;
+    private boolean isFavorite = false;
+    private String favoriteId = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -43,9 +52,10 @@ public class StoreDetailActivity extends AppCompatActivity {
         setContentView(R.layout.activity_store_detail);
 
         // ① Ánh xạ view
-        imgStore = findViewById(R.id.img_store_detail);
-        btnBack = findViewById(R.id.btn_back);
-        tvName = findViewById(R.id.tv_store_detail_name);
+        imgStore    = findViewById(R.id.img_store_detail);
+        btnBack     = findViewById(R.id.btn_back);
+        btnFavorite = findViewById(R.id.btn_favorite);
+        tvName      = findViewById(R.id.tv_store_detail_name);
         tvRating = findViewById(R.id.tv_store_detail_rating);
         tvTime = findViewById(R.id.tv_store_detail_time);
         tvFee = findViewById(R.id.tv_store_detail_fee);
@@ -72,6 +82,17 @@ public class StoreDetailActivity extends AppCompatActivity {
 
         // ④ Nút back
         btnBack.setOnClickListener(v -> finish());
+
+        // ⑤ Nút yêu thích
+        favoriteRepository = new FavoriteRepository();
+        if (storeId != null && !storeId.isEmpty()) {
+            loadFavoriteState(storeId);
+        }
+        final String finalStoreImage = storeImage;
+        final String finalStoreName2 = storeName;
+        final String finalStoreId = storeId;
+        btnFavorite.setOnClickListener(v ->
+                toggleFavorite(finalStoreId, finalStoreName2, finalStoreImage));
 
         // ⑤ Setup RecyclerView danh sách món
         foodAdapter = new FoodAdapter(this, foodList, food -> {
@@ -147,5 +168,52 @@ public class StoreDetailActivity extends AppCompatActivity {
         if (fee <= 0) return "Miễn phí ship";
         NumberFormat nf = NumberFormat.getInstance(new Locale("vi", "VN"));
         return "Ship " + nf.format(fee) + "đ";
+    }
+
+    // ── Favorite ─────────────────────────────────────────
+
+    private void loadFavoriteState(String storeId) {
+        String uid = getCurrentUid();
+        if (uid == null) return;
+        favoriteRepository.checkIsFavorite(uid, "store", storeId)
+                .observe(this, docId -> {
+                    favoriteId = docId;
+                    isFavorite = docId != null;
+                    updateFavoriteIcon();
+                });
+    }
+
+    private void toggleFavorite(String storeId, String storeName, String storeImage) {
+        String uid = getCurrentUid();
+        if (uid == null) {
+            Toast.makeText(this, "Bạn cần đăng nhập", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        if (isFavorite && favoriteId != null) {
+            favoriteRepository.removeFavorite(favoriteId)
+                    .addOnSuccessListener(unused ->
+                            Toast.makeText(this, "Đã bỏ yêu thích", Toast.LENGTH_SHORT).show())
+                    .addOnFailureListener(e ->
+                            Toast.makeText(this, "Lỗi: " + e.getMessage(), Toast.LENGTH_SHORT).show());
+        } else {
+            Favorite fav = new Favorite(uid, "store", storeId,
+                    storeName != null ? storeName : "",
+                    storeImage != null ? storeImage : "");
+            favoriteRepository.addFavorite(fav)
+                    .addOnSuccessListener(unused ->
+                            Toast.makeText(this, "Đã thêm vào yêu thích", Toast.LENGTH_SHORT).show())
+                    .addOnFailureListener(e ->
+                            Toast.makeText(this, "Lỗi: " + e.getMessage(), Toast.LENGTH_SHORT).show());
+        }
+    }
+
+    private void updateFavoriteIcon() {
+        int tintColor = isFavorite ? R.color.home_badge_red : R.color.white;
+        btnFavorite.setColorFilter(getColor(tintColor));
+    }
+
+    private String getCurrentUid() {
+        if (FirebaseAuth.getInstance().getCurrentUser() == null) return null;
+        return FirebaseAuth.getInstance().getCurrentUser().getUid();
     }
 }
