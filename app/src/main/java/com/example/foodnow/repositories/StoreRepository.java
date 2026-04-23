@@ -4,8 +4,9 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
 import com.example.foodnow.models.Store;
-import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.android.gms.tasks.Task;
 import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -42,5 +43,23 @@ public class StoreRepository {
                 });
 
         return liveData;
+    }
+
+    /** Lấy 1 quán theo ID (real-time) */
+    public LiveData<Store> getStoreById(String storeId) {
+        MutableLiveData<Store> liveData = new MutableLiveData<>();
+        db.collection("Stores").document(storeId)
+                .addSnapshotListener((doc, error) -> {
+                    if (error != null || doc == null) return;
+                    Store store = doc.toObject(Store.class);
+                    if (store != null) store.setId(doc.getId());
+                    liveData.setValue(store);
+                });
+        return liveData;
+    }
+
+    /** Cập nhật thông tin quán (trả về Task để biết khi nào xong) */
+    public Task<Void> updateStore(String storeId, Store store) {
+        return db.collection("Stores").document(storeId).set(store);
     }
 }

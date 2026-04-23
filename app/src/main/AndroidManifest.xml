@@ -30,6 +30,9 @@
             android:name=".activities.ImageAdminActivity"
             android:exported="false" />
         <activity android:name=".activities.StoreDetailActivity" />
+        <activity android:name=".activities.StoreOwnerActivity" />
+        <activity android:name=".activities.AddEditFoodActivity"
+            android:windowSoftInputMode="adjustResize" />
         <activity android:name=".activities.FoodDetailActivity" />
     </application>
 

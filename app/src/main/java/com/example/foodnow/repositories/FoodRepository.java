@@ -4,11 +4,14 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
 import com.example.foodnow.models.Food;
+import com.google.android.gms.tasks.Task;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class FoodRepository {
 
@@ -43,5 +46,36 @@ public class FoodRepository {
                 });
 
         return liveData;
+    }
+
+    /** Thêm món ăn mới — Firestore tự tạo ID */
+    public Task<Void> addFood(Food food) {
+        // Dùng Map để tránh lưu field "id" (id là doc key, không phải field)
+        Map<String, Object> data = foodToMap(food);
+        return db.collection("Foods").document().set(data);
+    }
+
+    /** Cập nhật món ăn đã có */
+    public Task<Void> updateFood(Food food) {
+        Map<String, Object> data = foodToMap(food);
+        return db.collection("Foods").document(food.getId()).set(data);
+    }
+
+    /** Xóa món ăn */
+    public Task<Void> deleteFood(String foodId) {
+        return db.collection("Foods").document(foodId).delete();
+    }
+
+    private Map<String, Object> foodToMap(Food food) {
+        Map<String, Object> map = new HashMap<>();
+        map.put("title", food.getTitle());
+        map.put("description", food.getDescription());
+        map.put("price", food.getPrice());
+        map.put("imageUrl", food.getImageUrl());
+        map.put("rating", food.getRating());
+        map.put("storeId", food.getStoreId());
+        map.put("categoryId", food.getCategoryId());
+        map.put("isAvailable", food.isAvailable());
+        return map;
     }
 }

@@ -28,25 +28,28 @@ public class LoginActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
 
-        // Khởi tạo ViewModel
         authViewModel = new ViewModelProvider(this).get(AuthViewModel.class);
 
-        // Ánh xạ view
         etEmail     = findViewById(R.id.et_email);
         etPassword  = findViewById(R.id.et_password);
         btnLogin    = findViewById(R.id.btn_login);
         progressBar = findViewById(R.id.progress_bar);
         TextView tvGoRegister = findViewById(R.id.tv_go_register);
 
-        // Nếu đã đăng nhập → vào thẳng MainActivity
+        // Nếu đã đăng nhập trước đó → bypass màn login (không cần fetch role lại)
         if (authViewModel.getUserLiveData().getValue() != null) {
             goToMain();
             return;
         }
 
-        // Quan sát trạng thái đăng nhập
-        authViewModel.getUserLiveData().observe(this, user -> {
-            if (user != null) {
+        // Observe profile đầy đủ (có role) — được set sau khi login thành công
+        authViewModel.getUserProfileLiveData().observe(this, userProfile -> {
+            if (userProfile == null) return;
+            // Route sang màn hình đúng theo role
+            if ("store_owner".equals(userProfile.getRole())) {
+                goToStoreOwner(userProfile.getStoreId());
+            } else {
+                // customer hoặc admin đều vào MainActivity
                 goToMain();
             }
         });
@@ -62,11 +65,9 @@ public class LoginActivity extends AppCompatActivity {
             btnLogin.setEnabled(!isLoading);
         });
 
-        // Xử lý bấm nút
         btnLogin.setOnClickListener(v -> {
             String email    = etEmail.getText().toString().trim();
             String password = etPassword.getText().toString().trim();
-
             if (email.isEmpty() || password.isEmpty()) {
                 Toast.makeText(this, "Vui lòng nhập email và mật khẩu", Toast.LENGTH_SHORT).show();
                 return;
@@ -74,14 +75,23 @@ public class LoginActivity extends AppCompatActivity {
             authViewModel.login(email, password);
         });
 
-        tvGoRegister.setOnClickListener(v -> {
-            startActivity(new Intent(this, RegisterActivity.class));
-        });
+        tvGoRegister.setOnClickListener(v ->
+                startActivity(new Intent(this, RegisterActivity.class)));
     }
 
     private void goToMain() {
         Intent intent = new Intent(this, MainActivity.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         startActivity(intent);
+        finish();
+    }
+
+    private void goToStoreOwner(String storeId) {
+        Intent intent = new Intent(this, StoreOwnerActivity.class);
+        intent.putExtra("storeId", storeId != null ? storeId : "");
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        startActivity(intent);
+        finish();
     }
 }
+

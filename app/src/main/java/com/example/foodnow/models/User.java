@@ -10,7 +10,8 @@ public class User {
     private String phone;
     private String address;
     private String imageUrl;
-    private String role; // "customer" (mặc định) hoặc "admin"
+    private String role;    // "customer" (mặc định) | "store_owner" | "admin"
+    private String storeId; // chỉ có ở role "store_owner" — trỏ tới Stores/{storeId}
     private Timestamp createdAt;
 
     // Constructor rỗng — bắt buộc cho Firestore
@@ -34,6 +35,7 @@ public class User {
     public String    getAddress()   { return address; }
     public String    getImageUrl()  { return imageUrl; }
     public String    getRole()      { return role; }
+    public String    getStoreId()   { return storeId; }
     public Timestamp getCreatedAt() { return createdAt; }
 
     // Setter
@@ -44,5 +46,6 @@ public class User {
     public void setAddress(String address)    { this.address = address; }
     public void setImageUrl(String imageUrl)  { this.imageUrl = imageUrl; }
     public void setRole(String role)          { this.role = role; }
+    public void setStoreId(String storeId)    { this.storeId = storeId; }
     public void setCreatedAt(Timestamp createdAt) { this.createdAt = createdAt; }
 }

@@ -1,5 +1,6 @@
 package com.example.foodnow.repositories;
 
+import com.example.foodnow.models.User;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
@@ -54,5 +55,23 @@ public class AuthRepository {
     /** Đăng xuất */
     public void logout() {
         auth.signOut();
+    }
+
+    /**
+     * Lấy thông tin profile (bao gồm role + storeId) từ Firestore.
+     * Dùng một lần (get) — không cần real-time listener.
+     */
+    public Task<User> getUserProfile(String uid) {
+        return db.collection("Users")
+                .document(uid)
+                .get()
+                .continueWith(task -> {
+                    if (task.isSuccessful() && task.getResult() != null) {
+                        User user = task.getResult().toObject(User.class);
+                        if (user != null) user.setId(uid);
+                        return user;
+                    }
+                    return null;
+                });
     }
 }

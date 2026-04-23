@@ -30,7 +30,8 @@ Users/
     phone        : "0901234567"
     address      : "123 Trần Phú, Đà Lạt"
     imageUrl     : "https://..."
-    role         : "customer"     ← "customer" (mặc định) hoặc "admin"
+    role         : "customer"     ← "customer" (mặc định) | "store_owner" | "admin"
+    storeId      : "store_abc123" ← chỉ có ở "store_owner" — trỏ tới Stores/{storeId}
     createdAt    : Timestamp
 ```
 
