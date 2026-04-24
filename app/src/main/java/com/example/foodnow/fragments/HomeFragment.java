@@ -8,9 +8,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
-import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -27,13 +25,15 @@ import com.example.foodnow.adapters.CategoryAdapter;
 import com.example.foodnow.adapters.RecommendedFoodAdapter;
 import com.example.foodnow.adapters.StoreAdapter;
 import com.example.foodnow.models.Category;
-import com.example.foodnow.models.RecommendedFood;
+import com.example.foodnow.models.Food;
 import com.example.foodnow.models.Store;
 import com.example.foodnow.utils.CartManager;
 import com.example.foodnow.viewmodels.HomeViewModel;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class HomeFragment extends Fragment {
 
@@ -51,16 +51,13 @@ public class HomeFragment extends Fragment {
     private StoreAdapter storeAdapter;
     private RecommendedFoodAdapter recommendedFoodAdapter;
 
-    // allStoreList: danh sách đầy đủ từ Firestore, không bao giờ bị xóa
-    // storeList: danh sách đang hiển thị (có thể bị lọc theo từ khóa + danh mục)
     private final List<Store> allStoreList = new ArrayList<>();
     private final List<Store> storeList = new ArrayList<>();
 
-    // ID danh mục đang chọn; "" = "Tất cả" (không lọc)
     private String selectedCategoryId = "";
 
     private final List<Category> categoryList = new ArrayList<>();
-    private final List<RecommendedFood> recommendedFoodList = new ArrayList<>();
+    private final List<Food> recommendedFoodList = new ArrayList<>();
 
     @Nullable
     @Override
@@ -101,7 +98,6 @@ public class HomeFragment extends Fragment {
         // ⑥ Action click nhanh vào icon giỏ hàng ở Header
         layoutHeaderCart.setOnClickListener(v -> {
             if (getActivity() instanceof MainActivity) {
-                // Tự động chuyển sang Tab Giỏ hàng (ID: nav_cart)
                 com.google.android.material.bottomnavigation.BottomNavigationView nav = 
                     getActivity().findViewById(R.id.bottom_navigation);
                 if (nav != null) {
@@ -126,10 +122,6 @@ public class HomeFragment extends Fragment {
             tvHeaderCartBadge.setText(String.valueOf(count));
         }
     }
-
-    // ═══════════════════════════════════════════════════════
-    // SEARCH
-    // ═══════════════════════════════════════════════════════
 
     private void setupSearch() {
         etSearch.addTextChangedListener(new TextWatcher() {
@@ -166,10 +158,6 @@ public class HomeFragment extends Fragment {
         storeAdapter.notifyDataSetChanged();
         tvNoResults.setVisibility(storeList.isEmpty() ? View.VISIBLE : View.GONE);
     }
-
-    // ═══════════════════════════════════════════════════════
-    // RECYCLERVIEW SETUP
-    // ═══════════════════════════════════════════════════════
 
     private void setupCategoryRecyclerView() {
         categoryAdapter = new CategoryAdapter(
@@ -213,20 +201,19 @@ public class HomeFragment extends Fragment {
     }
 
     private void setupRecommendedRecyclerView() {
-        recommendedFoodAdapter = new RecommendedFoodAdapter(
-                requireContext(),
-                recommendedFoodList,
-                food -> Toast.makeText(requireContext(),
-                        "Đã thêm " + food.getName(),
-                        Toast.LENGTH_SHORT).show()
-        );
+        recommendedFoodAdapter = new RecommendedFoodAdapter(requireContext());
         rvRecommendedFoods.setLayoutManager(new GridLayoutManager(requireContext(), 2));
         rvRecommendedFoods.setAdapter(recommendedFoodAdapter);
+        
+        // Tạo Map storeNames trống cho dữ liệu mock
+        Map<String, String> mockStoreNames = new HashMap<>();
+        mockStoreNames.put("s1", "Phở Hà Nội");
+        mockStoreNames.put("s2", "Quán Việt");
+        mockStoreNames.put("s3", "Cơm Gà Hải Nam");
+        mockStoreNames.put("s4", "BBQ House");
+        
+        recommendedFoodAdapter.setData(recommendedFoodList, mockStoreNames);
     }
-
-    // ═══════════════════════════════════════════════════════
-    // OBSERVE DATA
-    // ═══════════════════════════════════════════════════════
 
     private void observeData() {
         homeViewModel.getCategories().observe(getViewLifecycleOwner(), categories -> {
@@ -255,10 +242,11 @@ public class HomeFragment extends Fragment {
 
     private void seedMockRecommendedFoods() {
         recommendedFoodList.clear();
-        recommendedFoodList.add(new RecommendedFood("Phở Bò Đặc Biệt", "Phở Hà Nội", 65000, 4.8f, "https://images.unsplash.com/photo-1582878826629-29b7ad1cdc43", true));
-        recommendedFoodList.add(new RecommendedFood("Gỏi Cuốn Tôm Thịt", "Quán Việt", 35000, 4.7f, "https://images.unsplash.com/photo-1604908176997-431ec29b605e", false));
-        recommendedFoodList.add(new RecommendedFood("Cơm Gà Xối Mỡ", "Cơm Gà Hải Nam", 45000, 4.6f, "https://images.unsplash.com/photo-1512058564366-18510be2db19", true));
-        recommendedFoodList.add(new RecommendedFood("Xiên Nướng BBQ", "BBQ House", 25000, 4.5f, "https://images.unsplash.com/photo-1529692236671-f1dc3ce964f1", false));
+        // (String id, String title, String description, long price, String imageUrl, float rating, String storeId, String categoryId, boolean isAvailable)
+        recommendedFoodList.add(new Food("f1", "Phở Bò Đặc Biệt", "Nước dùng ngọt thanh", 65000, "https://images.unsplash.com/photo-1582878826629-29b7ad1cdc43", 4.8f, "s1", "pho", true));
+        recommendedFoodList.add(new Food("f2", "Gỏi Cuốn Tôm Thịt", "Đầy đủ rau sống", 35000, "https://images.unsplash.com/photo-1604908176997-431ec29b605e", 4.7f, "s2", "viet", true));
+        recommendedFoodList.add(new Food("f3", "Cơm Gà Xối Mỡ", "Da giòn rụm", 45000, "https://images.unsplash.com/photo-1512058564366-18510be2db19", 4.6f, "s3", "rice", true));
+        recommendedFoodList.add(new Food("f4", "Xiên Nướng BBQ", "Thịt ướp đậm đà", 25000, "https://images.unsplash.com/photo-1529692236671-f1dc3ce964f1", 4.5f, "s4", "bbq", true));
     }
 
     private void addMockStores() {

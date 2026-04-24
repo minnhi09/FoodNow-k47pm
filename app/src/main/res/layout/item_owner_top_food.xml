@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:paddingStart="8dp"
+    android:paddingTop="10dp"
+    android:paddingEnd="8dp"
+    android:paddingBottom="10dp">
+
+    <!-- Số thứ tự -->
+    <TextView
+        android:id="@+id/tv_rank"
+        android:layout_width="28dp"
+        android:layout_height="28dp"
+        android:background="@drawable/bg_rank_badge"
+        android:gravity="center"
+        android:text="1"
+        android:textColor="#FF6B35"
+        android:textSize="13sp"
+        android:textStyle="bold" />
+
+    <!-- Tên món -->
+    <TextView
+        android:id="@+id/tv_food_name"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="10dp"
+        android:layout_weight="1"
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:text="Tên món"
+        android:textColor="#212121"
+        android:textSize="13sp"
+        android:textStyle="bold" />
+
+    <!-- Đã bán -->
+    <TextView
+        android:id="@+id/tv_food_sold"
+        android:layout_width="52dp"
+        android:layout_height="wrap_content"
+        android:gravity="end"
+        android:text="0"
+        android:textColor="#424242"
+        android:textSize="13sp" />
+
+    <!-- Doanh thu -->
+    <TextView
+        android:id="@+id/tv_food_revenue"
+        android:layout_width="64dp"
+        android:layout_height="wrap_content"
+        android:gravity="end"
+        android:text="0tr"
+        android:textColor="#FF6B35"
+        android:textSize="13sp"
+        android:textStyle="bold" />
+
+</LinearLayout>

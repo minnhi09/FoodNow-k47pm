@@ -5,8 +5,10 @@ import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
 import com.example.foodnow.models.Food;
+import com.example.foodnow.models.Order;
 import com.example.foodnow.models.Store;
 import com.example.foodnow.repositories.FoodRepository;
+import com.example.foodnow.repositories.OrderRepository;
 import com.example.foodnow.repositories.StoreRepository;
 
 import java.util.List;
@@ -18,10 +20,12 @@ import java.util.List;
 public class StoreOwnerViewModel extends ViewModel {
 
     private final StoreRepository storeRepo = new StoreRepository();
-    private final FoodRepository foodRepo   = new FoodRepository();
+    private final FoodRepository  foodRepo  = new FoodRepository();
+    private final OrderRepository orderRepo = new OrderRepository();
 
-    private LiveData<Store> storeLiveData;
-    private LiveData<List<Food>> foodsLiveData;
+    private LiveData<Store>       storeLiveData;
+    private LiveData<List<Food>>  foodsLiveData;
+    private LiveData<List<Order>> ordersLiveData;
 
     // Thông báo trạng thái thao tác (thêm/sửa/xóa)
     private final MutableLiveData<String> actionMessage = new MutableLiveData<>();
@@ -93,4 +97,23 @@ public class StoreOwnerViewModel extends ViewModel {
 
     public LiveData<String> getActionMessage() { return actionMessage; }
     public LiveData<Boolean> getLoading()      { return loading; }
+
+    // ─── Orders ───────────────────────────────────────────
+
+    /** Lấy danh sách đơn hàng real-time theo quán (lazy init) */
+    public LiveData<List<Order>> getOrders(String storeId) {
+        if (ordersLiveData == null) {
+            ordersLiveData = orderRepo.getOrdersByStore(storeId);
+        }
+        return ordersLiveData;
+    }
+
+    /** Cập nhật trạng thái đơn hàng */
+    public void updateOrderStatus(String orderId, String newStatus) {
+        orderRepo.updateOrderStatus(orderId, newStatus)
+                .addOnSuccessListener(v ->
+                        actionMessage.setValue("Đã cập nhật trạng thái đơn hàng."))
+                .addOnFailureListener(e ->
+                        actionMessage.setValue("Lỗi cập nhật đơn: " + e.getMessage()));
+    }
 }

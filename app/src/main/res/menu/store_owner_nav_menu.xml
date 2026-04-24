@@ -4,12 +4,7 @@
     <item
         android:id="@+id/nav_owner_dashboard"
         android:icon="@drawable/ic_nav_home"
-        android:title="Quán của tôi" />
-
-    <item
-        android:id="@+id/nav_owner_foods"
-        android:icon="@drawable/ic_nav_cart"
-        android:title="Thực đơn" />
+        android:title="Tổng quan" />
 
     <item
         android:id="@+id/nav_owner_orders"
@@ -17,8 +12,18 @@
         android:title="Đơn hàng" />
 
     <item
-        android:id="@+id/nav_owner_profile"
+        android:id="@+id/nav_owner_foods"
+        android:icon="@drawable/ic_nav_cart"
+        android:title="Thực đơn" />
+
+    <item
+        android:id="@+id/nav_owner_stats"
+        android:icon="@drawable/ic_nav_stats"
+        android:title="Thống kê" />
+
+    <item
+        android:id="@+id/nav_owner_settings"
         android:icon="@drawable/ic_nav_profile"
-        android:title="Hồ sơ" />
+        android:title="Cài đặt" />
 
 </menu>

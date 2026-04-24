@@ -118,7 +118,9 @@
                 android:id="@+id/switch_available"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:checked="true" />
+                android:checked="true"
+                android:thumbTint="@color/switch_thumb_orange"
+                android:trackTint="@color/switch_track_orange" />
 
         </LinearLayout>
 

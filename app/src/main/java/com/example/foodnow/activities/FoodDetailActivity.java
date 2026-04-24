@@ -102,6 +102,9 @@ public class FoodDetailActivity extends AppCompatActivity {
         unitPrice              = getIntent().getLongExtra("foodPrice", 0L);
 
         storeId                = safeValue(getIntent().getStringExtra("storeId"));
+        if (storeId.isEmpty()) {
+            storeId = safeValue(getIntent().getStringExtra("foodStoreId"));
+        }
         storeName              = safeValue(getIntent().getStringExtra("storeName"));
         String storeTime       = getIntent().getStringExtra("storeDeliveryTime");
 

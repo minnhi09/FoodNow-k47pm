@@ -11,6 +11,7 @@ public class Food {
     private String storeId;
     private String categoryId;
     private boolean isAvailable;
+    private int soldCount;
 
     // ⚠️ BẮT BUỘC — Firestore cần constructor rỗng để deserialize
     public Food() {}
@@ -39,6 +40,7 @@ public class Food {
     public String getStoreId() { return storeId; }
     public String getCategoryId() { return categoryId; }
     public boolean isAvailable() { return isAvailable; }
+    public int getSoldCount() { return soldCount; }
 
     // Setter
     public void setId(String id) { this.id = id; }
@@ -50,4 +52,5 @@ public class Food {
     public void setStoreId(String storeId) { this.storeId = storeId; }
     public void setCategoryId(String categoryId) { this.categoryId = categoryId; }
     public void setAvailable(boolean available) { isAvailable = available; }
+    public void setSoldCount(int soldCount) { this.soldCount = soldCount; }
 }

@@ -36,10 +36,11 @@ public class LoginActivity extends AppCompatActivity {
         progressBar = findViewById(R.id.progress_bar);
         TextView tvGoRegister = findViewById(R.id.tv_go_register);
 
-        // Nếu đã đăng nhập trước đó → bypass màn login (không cần fetch role lại)
-        if (authViewModel.getUserLiveData().getValue() != null) {
-            goToMain();
-            return;
+        // Nếu đã đăng nhập trước đó → vẫn cần fetch role để route đúng màn hình
+        com.google.firebase.auth.FirebaseUser currentUser = authViewModel.getUserLiveData().getValue();
+        if (currentUser != null) {
+            authViewModel.loadUserProfile(currentUser.getUid());
+            // observer bên dưới sẽ xử lý routing
         }
 
         // Observe profile đầy đủ (có role) — được set sau khi login thành công

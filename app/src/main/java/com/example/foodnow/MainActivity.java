@@ -19,6 +19,7 @@ import com.google.android.material.bottomnavigation.BottomNavigationView;
 public class MainActivity extends AppCompatActivity {
 
     private BottomNavigationView bottomNav;
+    private final CartManager.OnCartChangedListener cartChangedListener = this::refreshCartBadge;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -67,6 +68,19 @@ public class MainActivity extends AppCompatActivity {
         refreshCartBadge();
     }
 
+    @Override
+    protected void onStart() {
+        super.onStart();
+        CartManager.getInstance().registerListener(cartChangedListener);
+        refreshCartBadge();
+    }
+
+    @Override
+    protected void onStop() {
+        CartManager.getInstance().unregisterListener(cartChangedListener);
+        super.onStop();
+    }
+
     // Hàm tiện ích: đặt Fragment vào fragment_container
     private boolean loadFragment(Fragment fragment) {
         if (fragment != null) {
@@ -88,10 +102,10 @@ public class MainActivity extends AppCompatActivity {
 
     public void refreshCartBadge() {
         if (bottomNav == null) return;
-        
+
         BadgeDrawable badgeDrawable = bottomNav.getOrCreateBadge(R.id.nav_cart);
         int cartCount = CartManager.getInstance().getItemCount();
-        
+
         if (cartCount > 0) {
             badgeDrawable.setVisible(true);
             badgeDrawable.setNumber(cartCount);

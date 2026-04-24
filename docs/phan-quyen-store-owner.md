@@ -280,4 +280,4 @@ A: Cast activity sang `StoreOwnerActivity` rồi gọi `.getStoreId()`. Không d
 A: ViewModel thông thường là đủ vì không cần `Context`. Repository tự tạo `FirebaseFirestore.getInstance()` (không cần truyền context).
 
 **Q: Nếu người dùng là `store_owner` nhưng `storeId` rỗng thì sao?**  
-A: `StoreOwnerActivity` nhận `storeId = ""`, các query Firestore sẽ không trả về kết quả. Cần đảm bảo mọi `store_owner` đều có `storeId` hợp lệ trong Firestore.
+A: `StoreOwnerActivity.onCreate()` phát hiện `storeId` rỗng trước khi load bất kỳ Fragment nào, hiện dialog "Tài khoản chưa được liên kết với cửa hàng" và tự đăng xuất. Xem hướng dẫn khắc phục tại [`docs/huong-dan-gan-role.md`](./huong-dan-gan-role.md).

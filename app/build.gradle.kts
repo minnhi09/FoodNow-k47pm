@@ -94,6 +94,9 @@ dependencies {
 
     implementation("jp.wasabeef:glide-transformations:4.3.0")
 
+    // MPAndroidChart (biểu đồ thống kê)
+    implementation("com.github.PhilJay:MPAndroidChart:v3.1.0")
+
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)

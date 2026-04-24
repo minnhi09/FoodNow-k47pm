@@ -6,10 +6,18 @@ import java.util.List;
 
 public class Order {
 
+    public static final String STATUS_NEW = "Đơn mới";
+    public static final String STATUS_PROCESSING = "Đang làm";
+    public static final String STATUS_READY = "Sẵn sàng";
+    public static final String STATUS_DELIVERING = "Đang giao";
+    public static final String STATUS_DONE = "Hoàn thành";
+    public static final String STATUS_CANCELLED = "Đã hủy";
+
     private String id;
     private String userId;
     private String storeId;
     private String storeName;
+    private String customerName;
     private String address;
     private String paymentMethod;
     private String note;
@@ -77,8 +85,16 @@ public class Order {
         return address;
     }
 
+    public String getCustomerName() {
+        return customerName;
+    }
+
     public void setAddress(String address) {
         this.address = address;
+    }
+
+    public void setCustomerName(String customerName) {
+        this.customerName = customerName;
     }
 
     public String getPaymentMethod() {
@@ -145,62 +161,14 @@ public class Order {
         this.items = items;
     }
 
-    public static class OrderItem {
-        private String foodId;
-        private String title;
-        private long price;
-        private int quantity;
-        private String imageUrl;
-
-        public OrderItem() {
+    public String getItemsSummary() {
+        if (items == null || items.isEmpty()) return "";
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < items.size(); i++) {
+            OrderItem item = items.get(i);
+            if (i > 0) sb.append(", ");
+            sb.append(item.getTitle()).append(" x").append(item.getQuantity());
         }
-
-        public OrderItem(String foodId, String title, long price, int quantity, String imageUrl) {
-            this.foodId = foodId;
-            this.title = title;
-            this.price = price;
-            this.quantity = quantity;
-            this.imageUrl = imageUrl;
-        }
-
-        public String getFoodId() {
-            return foodId;
-        }
-
-        public void setFoodId(String foodId) {
-            this.foodId = foodId;
-        }
-
-        public String getTitle() {
-            return title;
-        }
-
-        public void setTitle(String title) {
-            this.title = title;
-        }
-
-        public long getPrice() {
-            return price;
-        }
-
-        public void setPrice(long price) {
-            this.price = price;
-        }
-
-        public int getQuantity() {
-            return quantity;
-        }
-
-        public void setQuantity(int quantity) {
-            this.quantity = quantity;
-        }
-
-        public String getImageUrl() {
-            return imageUrl;
-        }
-
-        public void setImageUrl(String imageUrl) {
-            this.imageUrl = imageUrl;
-        }
+        return sb.toString();
     }
 }

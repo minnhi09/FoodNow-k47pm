@@ -7,8 +7,13 @@ import java.util.List;
 import java.util.Objects;
 
 public class CartManager {
+    public interface OnCartChangedListener {
+        void onCartChanged();
+    }
+
     private static CartManager instance;
     private final List<CartItem> items = new ArrayList<>();
+    private final List<OnCartChangedListener> listeners = new ArrayList<>();
     private String currentStoreId;
     private String currentStoreName;
 
@@ -30,6 +35,7 @@ public class CartManager {
         items.clear();
         currentStoreId = null;
         currentStoreName = null;
+        notifyChanged();
     }
 
     public synchronized void addItem(CartItem item) {
@@ -49,6 +55,7 @@ public class CartManager {
         for (CartItem existingItem : items) {
             if (Objects.equals(existingItem.getFoodId(), item.getFoodId())) {
                 existingItem.setQuantity(existingItem.getQuantity() + 1);
+                notifyChanged();
                 return;
             }
         }
@@ -56,6 +63,7 @@ public class CartManager {
         // Nếu là món mới, đảm bảo số lượng ban đầu là 1
         item.setQuantity(1);
         items.add(item);
+        notifyChanged();
     }
 
     public synchronized void removeItem(String foodId) {
@@ -73,6 +81,8 @@ public class CartManager {
 
         if (items.isEmpty()) {
             clearCart();
+        } else {
+            notifyChanged();
         }
     }
 
@@ -80,6 +90,8 @@ public class CartManager {
         items.removeIf(item -> Objects.equals(item.getFoodId(), foodId));
         if (items.isEmpty()) {
             clearCart();
+        } else {
+            notifyChanged();
         }
     }
 
@@ -109,5 +121,23 @@ public class CartManager {
 
     public synchronized String getCurrentStoreName() {
         return currentStoreName;
+    }
+
+    public synchronized void registerListener(OnCartChangedListener listener) {
+        if (listener == null || listeners.contains(listener)) {
+            return;
+        }
+        listeners.add(listener);
+    }
+
+    public synchronized void unregisterListener(OnCartChangedListener listener) {
+        listeners.remove(listener);
+    }
+
+    private void notifyChanged() {
+        List<OnCartChangedListener> snapshot = new ArrayList<>(listeners);
+        for (OnCartChangedListener listener : snapshot) {
+            listener.onCartChanged();
+        }
     }
 }

@@ -6,6 +6,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -14,7 +15,9 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 import com.example.foodnow.R;
 import com.example.foodnow.adapters.FoodAdapter;
+import com.example.foodnow.models.CartItem;
 import com.example.foodnow.models.Food;
+import com.example.foodnow.utils.CartManager;
 import com.example.foodnow.viewmodels.FavoritesViewModel;
 import com.example.foodnow.viewmodels.StoreDetailViewModel;
 import com.google.firebase.auth.FirebaseAuth;
@@ -86,9 +89,7 @@ public class StoreDetailActivity extends AppCompatActivity {
         btnBack.setOnClickListener(v -> finish());
 
         // ⑥ Setup RecyclerView danh sách món
-        foodAdapter = new FoodAdapter(this, foodList, food -> {
-            Toast.makeText(this, "Đã thêm: " + food.getTitle(), Toast.LENGTH_SHORT).show();
-        });
+        foodAdapter = new FoodAdapter(this, foodList, food -> addFoodToCart(food, storeDeliveryFee));
 
         // Click vào card món → mở FoodDetailActivity
         foodAdapter.setOnFoodClickListener(food -> {
@@ -121,6 +122,44 @@ public class StoreDetailActivity extends AppCompatActivity {
                 foodAdapter.notifyDataSetChanged();
             });
         }
+    }
+
+    private void addFoodToCart(Food food, long storeDeliveryFee) {
+        if (food == null || storeId == null || storeId.isEmpty()) {
+            Toast.makeText(this, "Không thể thêm món vào giỏ", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        CartManager cartManager = CartManager.getInstance();
+        CartItem cartItem = new CartItem(
+                food.getId(),
+                food.getTitle(),
+                food.getPrice(),
+                1,
+                food.getImageUrl(),
+                storeId,
+                storeName
+        );
+
+        Runnable addAction = () -> {
+            cartManager.addItem(cartItem);
+            Toast.makeText(this, "Đã thêm: " + food.getTitle(), Toast.LENGTH_SHORT).show();
+        };
+
+        if (cartManager.isFromDifferentStore(storeId)) {
+            new AlertDialog.Builder(this)
+                    .setTitle("Bắt đầu đơn mới?")
+                    .setMessage("Giỏ hàng đang có món từ quán khác. Xóa giỏ hiện tại và thêm món mới?")
+                    .setNegativeButton("Hủy", (dialog, which) -> dialog.dismiss())
+                    .setPositiveButton("Đồng ý", (dialog, which) -> {
+                        cartManager.clearCart();
+                        addAction.run();
+                    })
+                    .show();
+            return;
+        }
+
+        addAction.run();
     }
 
     private void setupFavorites() {

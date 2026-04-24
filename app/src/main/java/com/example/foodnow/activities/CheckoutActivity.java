@@ -17,6 +17,7 @@ import com.example.foodnow.R;
 import com.example.foodnow.adapters.CheckoutItemAdapter;
 import com.example.foodnow.models.CartItem;
 import com.example.foodnow.models.Order;
+import com.example.foodnow.models.OrderItem;
 import com.example.foodnow.utils.CartManager;
 import com.example.foodnow.viewmodels.CheckoutViewModel;
 import com.google.firebase.Timestamp;
@@ -133,9 +134,9 @@ public class CheckoutActivity extends AppCompatActivity {
             return;
         }
 
-        List<Order.OrderItem> orderItems = new ArrayList<>();
+        List<OrderItem> orderItems = new ArrayList<>();
         for (CartItem cartItem : cartManager.getItems()) {
-            orderItems.add(new Order.OrderItem(
+            orderItems.add(new OrderItem(
                     cartItem.getFoodId(),
                     cartItem.getTitle(),
                     cartItem.getPrice(),

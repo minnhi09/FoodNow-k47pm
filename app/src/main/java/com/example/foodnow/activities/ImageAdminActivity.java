@@ -54,7 +54,7 @@ public class ImageAdminActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_image_admin);
+        setContentView(R.layout.activity_owner_image_admin);
 
         spTargetType = findViewById(R.id.sp_target_type);
         spTargetItem = findViewById(R.id.sp_target_item);

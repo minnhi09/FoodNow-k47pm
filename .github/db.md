@@ -102,7 +102,7 @@ Orders/
     subtotal      : 110000
     deliveryFee   : 15000
     total         : 125000
-    status        : "Đang xử lý"
+    status        : "Đơn mới"
     createdAt     : Timestamp
 
     items : [                    ← mảng các món đã đặt
@@ -156,9 +156,8 @@ Stores ──────────────────────┘
 ## Trạng thái đơn hàng (field `status`)
 
 ```
-"Đang xử lý"  →  "Đang giao"  →  "Hoàn thành"
-                                   ↑
-                  "Đã hủy" ────────┘ (chỉ từ Đang xử lý)
+"Đơn mới" → "Đang làm" → "Sẵn sàng" → "Đang giao" → "Hoàn thành"
+      └──────────────→ "Đã hủy"
 ```
 
 
