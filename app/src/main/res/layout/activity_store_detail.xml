@@ -34,24 +34,23 @@
                 android:layout_width="40dp"
                 android:layout_height="40dp"
                 android:layout_margin="12dp"
-                android:background="@drawable/bg_home_rating_chip"
-                android:padding="8dp"
-                android:src="@android:drawable/ic_media_previous"
+                android:background="@drawable/bg_home_back_circle"
+                android:padding="10dp"
+                android:src="@drawable/ic_arrow_back"
                 app:layout_collapseMode="pin"
                 app:tint="@color/home_text_primary" />
 
             <!-- Nút yêu thích -->
             <ImageView
-                android:id="@+id/btn_favorite"
+                android:id="@+id/btn_favorite_store"
                 android:layout_width="40dp"
                 android:layout_height="40dp"
-                android:layout_gravity="top|end"
+                android:layout_gravity="end"
                 android:layout_margin="12dp"
-                android:background="@drawable/bg_home_rating_chip"
-                android:padding="8dp"
-                android:src="@drawable/ic_nav_favorite"
-                app:layout_collapseMode="pin"
-                app:tint="@color/white" />
+                android:background="@drawable/bg_home_back_circle"
+                android:padding="10dp"
+                android:src="@drawable/ic_heart_outline"
+                app:layout_collapseMode="pin" />
 
         </com.google.android.material.appbar.CollapsingToolbarLayout>
 

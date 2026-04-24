@@ -1,14 +1,11 @@
 package com.example.foodnow.fragments;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.EditText;
-import android.widget.LinearLayout;
-import android.widget.RadioGroup;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -16,199 +13,114 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.foodnow.MainActivity;
 import com.example.foodnow.R;
-import com.example.foodnow.adapters.CartItemAdapter;
-import com.example.foodnow.models.CartItem;
-import com.example.foodnow.models.Order;
-import com.example.foodnow.models.OrderItem;
-import com.example.foodnow.models.User;
-import com.example.foodnow.repositories.OrderRepository;
-import com.example.foodnow.repositories.UserRepository;
+import com.example.foodnow.activities.CheckoutActivity;
+import com.example.foodnow.adapters.CartAdapter;
 import com.example.foodnow.utils.CartManager;
-import com.google.android.material.bottomnavigation.BottomNavigationView;
-import com.google.android.material.button.MaterialButton;
-import com.google.firebase.Timestamp;
-import com.google.firebase.auth.FirebaseAuth;
 
 import java.text.NumberFormat;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Locale;
 
-/**
- * Giỏ hàng customer: local cart + checkout tạo Orders trên Firestore.
- */
 public class CartFragment extends Fragment {
-    private CartManager cartManager;
-    private CartItemAdapter adapter;
-    private UserRepository userRepository;
-    private OrderRepository orderRepository;
-    private NumberFormat currFmt;
 
-    private LinearLayout layoutEmpty;
-    private LinearLayout layoutContent;
-    private TextView tvStoreName;
-    private TextView tvAddress;
-    private TextView tvSubtotal;
-    private TextView tvDeliveryFee;
-    private TextView tvTotal;
-    private EditText etNote;
-    private RadioGroup rgPayment;
-    private MaterialButton btnPlaceOrder;
-
-    private User currentUser;
+    private RecyclerView rvCart;
+    private TextView tvCartCountHeader, tvSubtotal, tvDeliveryFee, tvTotal, tvTotalButton, tvEmpty;
+    private View btnCheckout, layoutPaymentDetails, cardPromo, cardPaymentMethod;
+    private final NumberFormat nf = NumberFormat.getInstance(new Locale("vi", "VN"));
 
     @Nullable
     @Override
-    public View onCreateView(@NonNull LayoutInflater inflater,
-                             @Nullable ViewGroup container,
-                             @Nullable Bundle savedInstanceState) {
+    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         return inflater.inflate(R.layout.fragment_cart, container, false);
     }
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+        
+        rvCart = view.findViewById(R.id.rv_cart);
+        tvCartCountHeader = view.findViewById(R.id.tv_cart_count_header);
+        tvSubtotal = view.findViewById(R.id.tv_subtotal);
+        tvDeliveryFee = view.findViewById(R.id.tv_delivery_fee);
+        tvTotal = view.findViewById(R.id.tv_total);
+        tvTotalButton = view.findViewById(R.id.tv_total_button);
+        tvEmpty = view.findViewById(R.id.tv_cart_empty);
+        btnCheckout = view.findViewById(R.id.btn_checkout);
+        layoutPaymentDetails = view.findViewById(R.id.layout_payment_details);
+        cardPromo = view.findViewById(R.id.card_promo);
+        cardPaymentMethod = view.findViewById(R.id.card_payment_method);
 
-        cartManager = CartManager.getInstance();
-        userRepository = new UserRepository();
-        orderRepository = new OrderRepository();
-        currFmt = NumberFormat.getInstance(new Locale("vi", "VN"));
-
-        layoutEmpty = view.findViewById(R.id.layout_cart_empty);
-        layoutContent = view.findViewById(R.id.layout_cart_content);
-        tvStoreName = view.findViewById(R.id.tv_cart_store_name);
-        tvAddress = view.findViewById(R.id.tv_cart_address);
-        tvSubtotal = view.findViewById(R.id.tv_cart_subtotal);
-        tvDeliveryFee = view.findViewById(R.id.tv_cart_delivery_fee);
-        tvTotal = view.findViewById(R.id.tv_cart_total);
-        etNote = view.findViewById(R.id.et_cart_note);
-        rgPayment = view.findViewById(R.id.rg_payment_method);
-        btnPlaceOrder = view.findViewById(R.id.btn_place_order);
-        RecyclerView rvItems = view.findViewById(R.id.rv_cart_items);
-
-        adapter = new CartItemAdapter(new CartItemAdapter.OnCartItemActionListener() {
-            @Override
-            public void onIncrease(CartItem item) {
-                cartManager.increase(item.getFoodId());
-                renderCart();
-            }
-
-            @Override
-            public void onDecrease(CartItem item) {
-                cartManager.decrease(item.getFoodId());
-                renderCart();
-            }
-
-            @Override
-            public void onRemove(CartItem item) {
-                cartManager.remove(item.getFoodId());
-                renderCart();
-            }
-        });
-        rvItems.setLayoutManager(new LinearLayoutManager(requireContext()));
-        rvItems.setAdapter(adapter);
-
-        userRepository.getCurrentUser().observe(getViewLifecycleOwner(), user -> {
-            currentUser = user;
-            if (user == null || user.getAddress() == null || user.getAddress().trim().isEmpty()) {
-                tvAddress.setText("Địa chỉ: Chưa thiết lập địa chỉ");
-            } else {
-                tvAddress.setText("Địa chỉ: " + user.getAddress());
+        rvCart.setLayoutManager(new LinearLayoutManager(getContext()));
+        
+        btnCheckout.setOnClickListener(v -> {
+            if (!CartManager.getInstance().getItems().isEmpty()) {
+                startActivity(new Intent(getContext(), CheckoutActivity.class));
             }
         });
 
-        btnPlaceOrder.setOnClickListener(v -> placeOrder());
-        renderCart();
+        updateUI();
     }
 
-    private void renderCart() {
-        List<CartItem> items = cartManager.getItems();
-        boolean isEmpty = items.isEmpty();
-
-        layoutEmpty.setVisibility(isEmpty ? View.VISIBLE : View.GONE);
-        layoutContent.setVisibility(isEmpty ? View.GONE : View.VISIBLE);
-        adapter.setItems(items);
-
-        String storeName = cartManager.getStoreName();
-        tvStoreName.setText(storeName == null || storeName.isEmpty() ? "Chưa chọn quán" : storeName);
-
-        long subtotal = cartManager.getSubtotal();
-        long deliveryFee = cartManager.getDeliveryFee();
-        long total = cartManager.getTotal();
-
-        tvSubtotal.setText("Tạm tính: " + currFmt.format(subtotal) + "đ");
-        tvDeliveryFee.setText("Phí giao hàng: " + currFmt.format(deliveryFee) + "đ");
-        tvTotal.setText("Tổng cộng: " + currFmt.format(total) + "đ");
+    @Override
+    public void onResume() {
+        super.onResume();
+        updateUI();
     }
 
-    private void placeOrder() {
-        if (cartManager.isEmpty()) {
-            Toast.makeText(requireContext(), "Giỏ hàng đang trống", Toast.LENGTH_SHORT).show();
+    private void updateUI() {
+        CartManager cart = CartManager.getInstance();
+        int count = cart.getItemCount();
+        
+        tvCartCountHeader.setText(getString(R.string.cart_item_count_format, count));
+        
+        if (cart.getItems().isEmpty()) {
+            tvEmpty.setVisibility(View.VISIBLE);
+            rvCart.setVisibility(View.GONE);
+            layoutPaymentDetails.setVisibility(View.GONE);
+            cardPromo.setVisibility(View.GONE);
+            cardPaymentMethod.setVisibility(View.GONE);
+            btnCheckout.setVisibility(View.GONE);
+        } else {
+            tvEmpty.setVisibility(View.GONE);
+            rvCart.setVisibility(View.VISIBLE);
+            layoutPaymentDetails.setVisibility(View.VISIBLE);
+            cardPromo.setVisibility(View.VISIBLE);
+            cardPaymentMethod.setVisibility(View.VISIBLE);
+            btnCheckout.setVisibility(View.VISIBLE);
+
+            CartAdapter adapter = new CartAdapter(getContext(), cart.getItems(), this::updatePrices);
+            rvCart.setAdapter(adapter);
+            updatePrices();
+        }
+        refreshCartBadge();
+    }
+
+    private void updatePrices() {
+        CartManager cart = CartManager.getInstance();
+        if (cart.getItems().isEmpty()) {
+            updateUI();
             return;
         }
-        String uid = FirebaseAuth.getInstance().getCurrentUser() != null
-                ? FirebaseAuth.getInstance().getCurrentUser().getUid()
-                : "";
-        if (uid.isEmpty()) {
-            Toast.makeText(requireContext(), "Bạn cần đăng nhập để đặt hàng", Toast.LENGTH_SHORT).show();
-            return;
-        }
 
-        String address = currentUser != null ? currentUser.getAddress() : "";
-        if (address == null || address.trim().isEmpty()) {
-            Toast.makeText(requireContext(), "Vui lòng cập nhật địa chỉ giao hàng trước", Toast.LENGTH_SHORT).show();
-            return;
-        }
+        long subtotalValue = cart.getSubtotal();
+        long deliveryFeeValue = 15000L; // Phí ship cố định
+        long totalValue = subtotalValue + deliveryFeeValue;
 
-        Order order = new Order();
-        order.setUserId(uid);
-        order.setStoreId(cartManager.getStoreId());
-        order.setStoreName(cartManager.getStoreName());
-        order.setCustomerName(currentUser != null ? currentUser.getName() : "Khách hàng");
-        order.setAddress(address);
-        order.setPaymentMethod(getPaymentMethod());
-        order.setNote(etNote.getText() != null ? etNote.getText().toString().trim() : "");
-        order.setSubtotal(cartManager.getSubtotal());
-        order.setDeliveryFee(cartManager.getDeliveryFee());
-        order.setTotal(cartManager.getTotal());
-        order.setStatus(Order.STATUS_NEW);
-        order.setCreatedAt(Timestamp.now());
-        order.setItems(toOrderItems(cartManager.getItems()));
-
-        btnPlaceOrder.setEnabled(false);
-        orderRepository.createOrder(order)
-                .addOnSuccessListener(unused -> {
-                    cartManager.clear();
-                    btnPlaceOrder.setEnabled(true);
-                    renderCart();
-                    Toast.makeText(requireContext(), "Đặt hàng thành công", Toast.LENGTH_SHORT).show();
-                    BottomNavigationView nav = requireActivity().findViewById(R.id.bottom_navigation);
-                    if (nav != null) nav.setSelectedItemId(R.id.nav_orders);
-                })
-                .addOnFailureListener(e -> {
-                    btnPlaceOrder.setEnabled(true);
-                    Toast.makeText(requireContext(), "Đặt hàng thất bại: " + e.getMessage(), Toast.LENGTH_LONG).show();
-                });
+        tvSubtotal.setText(nf.format(subtotalValue) + "đ");
+        tvDeliveryFee.setText(nf.format(deliveryFeeValue) + "đ");
+        tvTotal.setText(nf.format(totalValue) + "đ");
+        tvTotalButton.setText(nf.format(totalValue) + "đ");
+        
+        int count = cart.getItemCount();
+        tvCartCountHeader.setText(getString(R.string.cart_item_count_format, count));
+        
+        refreshCartBadge();
     }
 
-    private String getPaymentMethod() {
-        int checkedId = rgPayment.getCheckedRadioButtonId();
-        if (checkedId == R.id.rb_payment_transfer) return "Chuyển khoản";
-        return "Tiền mặt";
-    }
-
-    private List<OrderItem> toOrderItems(List<CartItem> cartItems) {
-        List<OrderItem> result = new ArrayList<>();
-        for (CartItem item : cartItems) {
-            result.add(new OrderItem(
-                    item.getFoodId(),
-                    item.getTitle(),
-                    item.getPrice(),
-                    item.getQuantity(),
-                    item.getImageUrl()
-            ));
+    private void refreshCartBadge() {
+        if (getActivity() instanceof MainActivity) {
+            ((MainActivity) getActivity()).refreshCartBadge();
         }
-        return result;
     }
 }

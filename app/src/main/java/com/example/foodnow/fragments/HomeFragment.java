@@ -8,10 +8,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
-import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -21,6 +18,7 @@ import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.foodnow.MainActivity;
 import com.example.foodnow.activities.StoreDetailActivity;
 import com.example.foodnow.R;
 import com.example.foodnow.adapters.CategoryAdapter;
@@ -28,13 +26,9 @@ import com.example.foodnow.adapters.RecommendedFoodAdapter;
 import com.example.foodnow.adapters.StoreAdapter;
 import com.example.foodnow.models.Category;
 import com.example.foodnow.models.Food;
-import com.example.foodnow.models.Order;
 import com.example.foodnow.models.Store;
-import com.example.foodnow.repositories.OrderRepository;
 import com.example.foodnow.utils.CartManager;
 import com.example.foodnow.viewmodels.HomeViewModel;
-import com.example.foodnow.viewmodels.ProfileViewModel;
-import com.google.firebase.auth.FirebaseAuth;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -46,34 +40,24 @@ public class HomeFragment extends Fragment {
     // ── Khai báo biến ────────────────────────────────────
     private HomeViewModel homeViewModel;
 
-    private TextView tvDeliveryAddress;
-    private LinearLayout layoutOrderCard;
-    private TextView tvOrderStatus;
-    private TextView tvCartBadge;
     private EditText etSearch;
-    private TextView tvNoResults;
+    private TextView tvNoResults, tvHeaderCartBadge;
     private RecyclerView rvCategories;
     private RecyclerView rvStores;
     private RecyclerView rvRecommendedFoods;
-    private ImageView ivHeaderCart;
+    private View layoutHeaderCart;
 
     private CategoryAdapter categoryAdapter;
     private StoreAdapter storeAdapter;
     private RecommendedFoodAdapter recommendedFoodAdapter;
 
-    // allStoreList: danh sách đầy đủ từ Firestore, không bao giờ bị xóa
-    // storeList: danh sách đang hiển thị (có thể bị lọc theo từ khóa + danh mục)
     private final List<Store> allStoreList = new ArrayList<>();
     private final List<Store> storeList = new ArrayList<>();
 
-    // Lưu tạm foods và storeNames khi chờ cả 2 cùng sẵn sàng
-    private List<Food> pendingFoods = null;
-    private Map<String, String> pendingStoreNames = null;
-
-    // ID danh mục đang chọn; "" = "Tất cả" (không lọc)
     private String selectedCategoryId = "";
 
     private final List<Category> categoryList = new ArrayList<>();
+    private final List<Food> recommendedFoodList = new ArrayList<>();
 
     @Nullable
     @Override
@@ -88,21 +72,19 @@ public class HomeFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
 
         // ① Ánh xạ view
-        tvDeliveryAddress = view.findViewById(R.id.tv_delivery_address);
-        layoutOrderCard   = view.findViewById(R.id.layout_order_card);
-        tvOrderStatus     = view.findViewById(R.id.tv_order_status);
-        tvCartBadge       = view.findViewById(R.id.tv_header_cart_badge);
         etSearch        = view.findViewById(R.id.et_search);
         tvNoResults     = view.findViewById(R.id.tv_no_results);
         rvCategories    = view.findViewById(R.id.rv_categories);
         rvStores        = view.findViewById(R.id.rv_stores);
         rvRecommendedFoods = view.findViewById(R.id.rv_recommended_foods);
-        ivHeaderCart    = view.findViewById(R.id.iv_header_cart);
+        layoutHeaderCart = view.findViewById(R.id.iv_header_cart).getParent() instanceof View ? (View) view.findViewById(R.id.iv_header_cart).getParent() : view.findViewById(R.id.iv_header_cart);
+        tvHeaderCartBadge = view.findViewById(R.id.tv_header_cart_badge);
 
         // ② Khởi tạo ViewModel
         homeViewModel = new ViewModelProvider(this).get(HomeViewModel.class);
 
-        // ③ Setup RecyclerViews
+        // ③ Setup RecyclerViews + dữ liệu mock
+        seedMockRecommendedFoods();
         setupCategoryRecyclerView();
         setupStoreRecyclerView();
         setupRecommendedRecyclerView();
@@ -113,40 +95,33 @@ public class HomeFragment extends Fragment {
         // ⑤ Observe data từ Firestore
         observeData();
 
-        // ⑥ Observe địa chỉ giao hàng từ profile user
-        observeUserAddress();
-
-        // ⑦ Observe đơn hàng đang hoạt động
-        observeActiveOrder();
-
-        // ⑧ Action click nhanh
-        ivHeaderCart.setOnClickListener(v -> {
-            android.view.View navView = requireActivity().findViewById(R.id.bottom_navigation);
-            if (navView instanceof com.google.android.material.bottomnavigation.BottomNavigationView) {
-                ((com.google.android.material.bottomnavigation.BottomNavigationView) navView)
-                        .setSelectedItemId(R.id.nav_cart);
+        // ⑥ Action click nhanh vào icon giỏ hàng ở Header
+        layoutHeaderCart.setOnClickListener(v -> {
+            if (getActivity() instanceof MainActivity) {
+                com.google.android.material.bottomnavigation.BottomNavigationView nav = 
+                    getActivity().findViewById(R.id.bottom_navigation);
+                if (nav != null) {
+                    nav.setSelectedItemId(R.id.nav_cart);
+                }
             }
         });
-        layoutOrderCard.setOnClickListener(v -> {
-            android.view.View navView = requireActivity().findViewById(R.id.bottom_navigation);
-            if (navView instanceof com.google.android.material.bottomnavigation.BottomNavigationView) {
-                ((com.google.android.material.bottomnavigation.BottomNavigationView) navView)
-                        .setSelectedItemId(R.id.nav_orders);
-            }
-        });
-
-        updateHeaderCartBadge();
+        
+        updateCartBadge();
     }
 
     @Override
     public void onResume() {
         super.onResume();
-        updateHeaderCartBadge();
+        updateCartBadge();
     }
 
-    // ═══════════════════════════════════════════════════════
-    // SEARCH
-    // ═══════════════════════════════════════════════════════
+    private void updateCartBadge() {
+        int count = CartManager.getInstance().getItemCount();
+        if (tvHeaderCartBadge != null) {
+            tvHeaderCartBadge.setVisibility(count > 0 ? View.VISIBLE : View.GONE);
+            tvHeaderCartBadge.setText(String.valueOf(count));
+        }
+    }
 
     private void setupSearch() {
         etSearch.addTextChangedListener(new TextWatcher() {
@@ -163,23 +138,14 @@ public class HomeFragment extends Fragment {
         });
     }
 
-    /**
-     * Lọc danh sách quán ăn theo TỪ KHÓA và DANH MỤC (kết hợp cùng lúc).
-     * - query rỗng + categoryId rỗng → hiển thị tất cả
-     * - Chỉ query → lọc theo tên/mô tả
-     * - Chỉ category → lọc theo categoryId của store
-     * - Cả hai → phải thỏa mãn cả hai điều kiện (AND)
-     */
     private void filterStores(String query) {
         storeList.clear();
         String lower = query.toLowerCase();
 
         for (Store store : allStoreList) {
-            // Điều kiện 1: lọc theo danh mục
             boolean categoryMatch = selectedCategoryId.isEmpty()
                     || selectedCategoryId.equals(store.getCategoryId());
 
-            // Điều kiện 2: lọc theo từ khóa tìm kiếm
             boolean searchMatch = query.isEmpty()
                     || (store.getName() != null && store.getName().toLowerCase().contains(lower))
                     || (store.getDescription() != null && store.getDescription().toLowerCase().contains(lower));
@@ -193,25 +159,18 @@ public class HomeFragment extends Fragment {
         tvNoResults.setVisibility(storeList.isEmpty() ? View.VISIBLE : View.GONE);
     }
 
-    // ═══════════════════════════════════════════════════════
-    // RECYCLERVIEW SETUP
-    // ═══════════════════════════════════════════════════════
-
     private void setupCategoryRecyclerView() {
         categoryAdapter = new CategoryAdapter(
                 requireContext(),
                 categoryList,
                 category -> {
                     String clickedId = category.getId();
-                    // Click "Tất cả" HOẶC click lại chip đang chọn → bỏ lọc
                     if ("all".equals(clickedId) || clickedId.equals(selectedCategoryId)) {
                         selectedCategoryId = "";
                     } else {
                         selectedCategoryId = clickedId;
                     }
-                    // Cập nhật visual trên chip
                     categoryAdapter.setSelectedCategory(selectedCategoryId);
-                    // Áp lại filter (giữ nguyên từ khóa search hiện tại)
                     filterStores(etSearch.getText().toString().trim());
                 }
         );
@@ -227,7 +186,6 @@ public class HomeFragment extends Fragment {
                 requireContext(),
                 storeList,
                 store -> {
-                    // Mở màn hình chi tiết quán ăn
                     Intent intent = new Intent(requireContext(), StoreDetailActivity.class);
                     intent.putExtra("storeId", store.getId());
                     intent.putExtra("storeName", store.getName());
@@ -246,14 +204,18 @@ public class HomeFragment extends Fragment {
         recommendedFoodAdapter = new RecommendedFoodAdapter(requireContext());
         rvRecommendedFoods.setLayoutManager(new GridLayoutManager(requireContext(), 2));
         rvRecommendedFoods.setAdapter(recommendedFoodAdapter);
+        
+        // Tạo Map storeNames trống cho dữ liệu mock
+        Map<String, String> mockStoreNames = new HashMap<>();
+        mockStoreNames.put("s1", "Phở Hà Nội");
+        mockStoreNames.put("s2", "Quán Việt");
+        mockStoreNames.put("s3", "Cơm Gà Hải Nam");
+        mockStoreNames.put("s4", "BBQ House");
+        
+        recommendedFoodAdapter.setData(recommendedFoodList, mockStoreNames);
     }
 
-    // ═══════════════════════════════════════════════════════
-    // OBSERVE DATA
-    // ═══════════════════════════════════════════════════════
-
     private void observeData() {
-        // Observe danh mục
         homeViewModel.getCategories().observe(getViewLifecycleOwner(), categories -> {
             categoryList.clear();
             categoryList.add(new Category("all", "Tất cả", ""));
@@ -267,7 +229,6 @@ public class HomeFragment extends Fragment {
             categoryAdapter.notifyDataSetChanged();
         });
 
-        // Observe quán ăn — lưu vào allStoreList, rồi áp filter hiện tại
         homeViewModel.getStores().observe(getViewLifecycleOwner(), stores -> {
             allStoreList.clear();
             if (stores != null && !stores.isEmpty()) {
@@ -275,42 +236,23 @@ public class HomeFragment extends Fragment {
             } else {
                 addMockStores();
             }
-            // Áp lại từ khóa đang nhập (nếu có)
             filterStores(etSearch.getText().toString().trim());
-        });
-
-        // Observe món ăn nổi bật
-        homeViewModel.getTopRatedFoods().observe(getViewLifecycleOwner(), foods -> {
-            pendingFoods = foods;
-            if (foods != null && !foods.isEmpty()) {
-                homeViewModel.fetchStoreNamesForFoods(foods);
-            } else {
-                // Không có food → xóa trắng adapter
-                recommendedFoodAdapter.setData(null, null);
-            }
-        });
-
-        // Observe tên quán (được fetch sau khi foods sẵn sàng)
-        homeViewModel.getStoreNamesMap().observe(getViewLifecycleOwner(), storeNames -> {
-            pendingStoreNames = storeNames;
-            if (pendingFoods != null) {
-                recommendedFoodAdapter.setData(pendingFoods,
-                        pendingStoreNames != null ? pendingStoreNames : new HashMap<>());
-            }
         });
     }
 
-    // ═══════════════════════════════════════════════════════
-    // DỮ LIỆU MẪU (dùng khi Firestore trống)
-    // ═══════════════════════════════════════════════════════
+    private void seedMockRecommendedFoods() {
+        recommendedFoodList.clear();
+        // (String id, String title, String description, long price, String imageUrl, float rating, String storeId, String categoryId, boolean isAvailable)
+        recommendedFoodList.add(new Food("f1", "Phở Bò Đặc Biệt", "Nước dùng ngọt thanh", 65000, "https://images.unsplash.com/photo-1582878826629-29b7ad1cdc43", 4.8f, "s1", "pho", true));
+        recommendedFoodList.add(new Food("f2", "Gỏi Cuốn Tôm Thịt", "Đầy đủ rau sống", 35000, "https://images.unsplash.com/photo-1604908176997-431ec29b605e", 4.7f, "s2", "viet", true));
+        recommendedFoodList.add(new Food("f3", "Cơm Gà Xối Mỡ", "Da giòn rụm", 45000, "https://images.unsplash.com/photo-1512058564366-18510be2db19", 4.6f, "s3", "rice", true));
+        recommendedFoodList.add(new Food("f4", "Xiên Nướng BBQ", "Thịt ướp đậm đà", 25000, "https://images.unsplash.com/photo-1529692236671-f1dc3ce964f1", 4.5f, "s4", "bbq", true));
+    }
 
     private void addMockStores() {
-        allStoreList.add(buildStore("Phở Hà Nội", "Việt Nam", 4.8f, "20-30 phút",
-                "https://images.unsplash.com/photo-1544025162-d76694265947", "pho"));
-        allStoreList.add(buildStore("Bánh Mì Sài Gòn", "Việt Nam", 4.6f, "15-25 phút",
-                "https://images.unsplash.com/photo-1481070414801-51fd732d7184", "banh-mi"));
-        allStoreList.add(buildStore("Trà Sữa Đài Loan", "Đồ uống", 4.9f, "10-20 phút",
-                "https://images.unsplash.com/photo-1558857563-c0c74f00b5f1", "dessert"));
+        allStoreList.add(buildStore("Phở Hà Nội", "Việt Nam", 4.8f, "20-30 phút", "https://images.unsplash.com/photo-1544025162-d76694265947", "pho"));
+        allStoreList.add(buildStore("Bánh Mì Sài Gòn", "Việt Nam", 4.6f, "15-25 phút", "https://images.unsplash.com/photo-1481070414801-51fd732d7184", "banh-mi"));
+        allStoreList.add(buildStore("Trà Sữa Đài Loan", "Đồ uống", 4.9f, "10-20 phút", "https://images.unsplash.com/photo-1558857563-c0c74f00b5f1", "dessert"));
     }
 
     private Store buildStore(String name, String address, float rating, String time, String imageUrl, String categoryId) {
@@ -322,65 +264,5 @@ public class HomeFragment extends Fragment {
         store.setImageUrl(imageUrl);
         store.setCategoryId(categoryId);
         return store;
-    }
-
-    // ═══════════════════════════════════════════════════════
-    // ĐỊA CHỈ GIAO HÀNG — lấy từ profile user
-    // ═══════════════════════════════════════════════════════
-
-    private void observeUserAddress() {
-        ProfileViewModel profileViewModel =
-                new ViewModelProvider(this).get(ProfileViewModel.class);
-        profileViewModel.getUser().observe(getViewLifecycleOwner(), user -> {
-            if (user != null && user.getAddress() != null && !user.getAddress().isEmpty()) {
-                tvDeliveryAddress.setText(user.getAddress());
-            } else {
-                tvDeliveryAddress.setText("Chưa thiết lập địa chỉ");
-            }
-        });
-    }
-
-    // ═══════════════════════════════════════════════════════
-    // ĐƠN HÀNG ĐANG HOẠT ĐỘNG — chỉ hiển thị khi có đơn chưa hoàn thành
-    // ═══════════════════════════════════════════════════════
-
-    private void observeActiveOrder() {
-        String uid = FirebaseAuth.getInstance().getCurrentUser() != null
-                ? FirebaseAuth.getInstance().getCurrentUser().getUid() : null;
-        if (uid == null) return;
-
-        OrderRepository orderRepo = new OrderRepository();
-        orderRepo.getOrdersByUser(uid).observe(getViewLifecycleOwner(), orders -> {
-            if (orders == null || orders.isEmpty()) {
-                layoutOrderCard.setVisibility(View.GONE);
-                return;
-            }
-            // Tìm đơn hàng đang hoạt động (chưa hoàn thành và chưa hủy)
-            // orders được sắp xếp theo createdAt giảm dần → lấy đơn mới nhất trước
-            Order activeOrder = null;
-            for (Order order : orders) {
-                String status = order.getStatus();
-                if (!Order.STATUS_DONE.equals(status) && !Order.STATUS_CANCELLED.equals(status)) {
-                    activeOrder = order;
-                    break;
-                }
-            }
-            if (activeOrder != null) {
-                tvOrderStatus.setText(activeOrder.getStatus());
-                layoutOrderCard.setVisibility(View.VISIBLE);
-            } else {
-                layoutOrderCard.setVisibility(View.GONE);
-            }
-        });
-    }
-
-    private void updateHeaderCartBadge() {
-        int count = CartManager.getInstance().getItemCount();
-        if (count <= 0) {
-            tvCartBadge.setVisibility(View.GONE);
-            return;
-        }
-        tvCartBadge.setVisibility(View.VISIBLE);
-        tvCartBadge.setText(String.valueOf(Math.min(count, 99)));
     }
 }
