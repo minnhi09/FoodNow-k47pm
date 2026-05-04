@@ -11,6 +11,16 @@
         android:orientation="vertical"
         android:padding="32dp">
 
+        <!-- Logo -->
+        <ImageView
+            android:layout_width="100dp"
+            android:layout_height="100dp"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="24dp"
+            android:layout_marginBottom="4dp"
+            android:scaleType="fitCenter"
+            android:src="@drawable/ic_launcher_foreground_logo" />
+
         <!-- Tiêu đề -->
         <TextView
             android:layout_width="wrap_content"
@@ -19,7 +29,6 @@
             android:textSize="28sp"
             android:textStyle="bold"
             android:textColor="#333333"
-            android:layout_marginTop="24dp"
             android:layout_marginBottom="24dp" />
 
         <!-- Họ tên -->

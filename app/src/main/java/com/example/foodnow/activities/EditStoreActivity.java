@@ -3,6 +3,8 @@ package com.example.foodnow.activities;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
+import android.widget.ArrayAdapter;
+import android.widget.AutoCompleteTextView;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.Toast;
@@ -13,13 +15,17 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.bumptech.glide.Glide;
 import com.example.foodnow.R;
+import com.example.foodnow.models.Category;
+import com.example.foodnow.repositories.CategoryRepository;
 import com.example.foodnow.repositories.StoreRepository;
 import com.example.foodnow.repositories.UserRepository;
 import com.example.foodnow.utils.CloudinaryHelper;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.textfield.TextInputEditText;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /** Màn hình chỉnh sửa thông tin cửa hàng, mở từ icon cây bút trong OwnerSettingsFragment. */
@@ -29,13 +35,17 @@ public class EditStoreActivity extends AppCompatActivity {
 
     private StoreRepository storeRepo;
     private UserRepository  userRepo;
+    private CategoryRepository categoryRepo;
 
     private ImageView         imgAvatar;
     private ProgressBar       progressAvatar;
     private TextInputEditText etName, etAddress, etPhone, etDescription;
+    private AutoCompleteTextView actvCategory;
     private MaterialButton    btnSave;
 
     private String storeId;
+    private String currentCategoryId = "";
+    private final List<Category> categoryList = new ArrayList<>();
     private ActivityResultLauncher<String> pickAvatarLauncher;
 
     @Override
@@ -52,6 +62,7 @@ public class EditStoreActivity extends AppCompatActivity {
 
         storeRepo = new StoreRepository();
         userRepo  = new UserRepository();
+        categoryRepo = new CategoryRepository();
 
         imgAvatar      = findViewById(R.id.img_store_avatar);
         progressAvatar = findViewById(R.id.progress_avatar_upload);
@@ -59,6 +70,7 @@ public class EditStoreActivity extends AppCompatActivity {
         etAddress      = findViewById(R.id.et_store_address);
         etPhone        = findViewById(R.id.et_store_phone);
         etDescription  = findViewById(R.id.et_store_description);
+        actvCategory   = findViewById(R.id.actv_category);
         btnSave        = findViewById(R.id.btn_save_store);
 
         // Đăng ký launcher chọn ảnh avatar
@@ -81,6 +93,24 @@ public class EditStoreActivity extends AppCompatActivity {
             etAddress.setText(store.getAddress());
             etPhone.setText(store.getPhone());
             etDescription.setText(store.getDescription());
+            // Pre-select category
+            currentCategoryId = store.getCategoryId() != null ? store.getCategoryId() : "";
+            preselectCategory(currentCategoryId);
+        });
+
+        // Load danh mục cho dropdown
+        categoryRepo.getAllCategories().observe(this, categories -> {
+            categoryList.clear();
+            if (categories != null) categoryList.addAll(categories);
+            List<String> names = new ArrayList<>();
+            for (Category c : categoryList) names.add(c.getName());
+            ArrayAdapter<String> adapter = new ArrayAdapter<>(this,
+                    android.R.layout.simple_dropdown_item_1line, names);
+            actvCategory.setAdapter(adapter);
+            // Nếu đã có categoryId trước khi categories load xong, pre-select lại
+            preselectCategory(currentCategoryId);
+            actvCategory.setOnItemClickListener((parent, view, position, id) ->
+                    currentCategoryId = categoryList.get(position).getId());
         });
 
         // Load avatar chủ cửa hàng (user hiện tại)
@@ -117,6 +147,9 @@ public class EditStoreActivity extends AppCompatActivity {
         updates.put("address", addr);
         updates.put("phone", phone);
         updates.put("description", desc);
+        if (!currentCategoryId.isEmpty()) {
+            updates.put("categoryId", currentCategoryId);
+        }
 
         btnSave.setEnabled(false);
         storeRepo.updateStoreFields(storeId, updates)
@@ -128,6 +161,17 @@ public class EditStoreActivity extends AppCompatActivity {
                     Toast.makeText(this, "Lưu thất bại: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                     btnSave.setEnabled(true);
                 });
+    }
+
+    /** Hiển thị tên danh mục tương ứng với categoryId đã lưu trong AutoCompleteTextView */
+    private void preselectCategory(String categoryId) {
+        if (categoryId == null || categoryId.isEmpty()) return;
+        for (Category c : categoryList) {
+            if (c.getId().equals(categoryId)) {
+                actvCategory.setText(c.getName(), false);
+                break;
+            }
+        }
     }
 
     private void uploadAvatar(Uri uri) {

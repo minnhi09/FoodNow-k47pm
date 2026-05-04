@@ -14,6 +14,7 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.core.content.ContextCompat;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
@@ -26,11 +27,15 @@ import com.example.foodnow.R;
 import com.example.foodnow.activities.StoreOwnerActivity;
 import com.example.foodnow.adapters.StoreOrderAdapter;
 import com.example.foodnow.models.Order;
+import com.example.foodnow.models.OrderItem;
 import com.example.foodnow.viewmodels.StoreOwnerViewModel;
 
+import java.text.NumberFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
+import java.util.Locale;
 import java.util.stream.Collectors;
 
 /**
@@ -46,6 +51,10 @@ public class StoreOrdersFragment extends Fragment {
     private StoreOrderAdapter   adapter;
     private List<Order>         allOrders = new ArrayList<>();
     private long lastNewCount = -1;
+
+    private final NumberFormat    currFmt = NumberFormat.getInstance(new Locale("vi", "VN"));
+    private final SimpleDateFormat timeFmt =
+            new SimpleDateFormat("dd/MM/yyyy HH:mm", new Locale("vi", "VN"));
 
     private TextView    tabAll, tabNew, tabProcessing, tabDone;
     private TextView    tvCountToday, tvNewBadge, tvTabNewBadge;
@@ -88,6 +97,11 @@ public class StoreOrdersFragment extends Fragment {
             @Override
             public void onRejectAction(Order order) {
                 viewModel.updateOrderStatus(order.getId(), Order.STATUS_CANCELLED);
+            }
+
+            @Override
+            public void onOrderClick(Order order) {
+                showOrderDetailDialog(order);
             }
         });
         recyclerView.setLayoutManager(new LinearLayoutManager(requireContext()));
@@ -177,8 +191,7 @@ public class StoreOrdersFragment extends Fragment {
         switch (current) {
             case Order.STATUS_NEW:        return Order.STATUS_PROCESSING;
             case Order.STATUS_PROCESSING: return Order.STATUS_READY;
-            case Order.STATUS_READY:      return Order.STATUS_DELIVERING;
-            case Order.STATUS_DELIVERING: return Order.STATUS_DONE;
+            case Order.STATUS_READY:      return Order.STATUS_DONE;  // bỏ qua DELIVERING
             default:                      return null;
         }
     }
@@ -193,6 +206,64 @@ public class StoreOrdersFragment extends Fragment {
                 .filter(o -> o.getCreatedAt() != null
                         && o.getCreatedAt().toDate().after(today.getTime()))
                 .collect(Collectors.toList());
+    }
+
+    private void showOrderDetailDialog(Order order) {
+        if (order == null || !isAdded()) return;
+
+        String orderId = order.getId() != null
+                ? order.getId().substring(0, Math.min(8, order.getId().length())).toUpperCase()
+                : "—";
+
+        StringBuilder sb = new StringBuilder();
+
+        // Trạng thái
+        sb.append("Trạng thái: ").append(order.getStatus() != null ? order.getStatus() : "—").append("\n\n");
+
+        // Danh sách món
+        sb.append("🛒 Các món đặt:\n");
+        if (order.getItems() != null && !order.getItems().isEmpty()) {
+            for (OrderItem item : order.getItems()) {
+                long sub = (long) (item.getPrice() * item.getQuantity());
+                sb.append("  • ").append(item.getTitle())
+                        .append(" x").append(item.getQuantity())
+                        .append("  —  ").append(currFmt.format(sub)).append("đ\n");
+            }
+        } else {
+            sb.append("  (Không có thông tin món)\n");
+        }
+
+        // Tiền
+        sb.append("\n─────────────────────\n");
+        sb.append("Tạm tính:   ").append(currFmt.format((long) order.getSubtotal())).append("đ\n");
+        sb.append("Phí giao:   ").append(currFmt.format((long) order.getDeliveryFee())).append("đ\n");
+        sb.append("Tổng cộng: ").append(currFmt.format((long) order.getTotal())).append("đ\n\n");
+
+        // Giao hàng
+        sb.append("📍 Địa chỉ: ")
+                .append(order.getAddress() != null ? order.getAddress() : "—").append("\n");
+        sb.append("💳 Thanh toán: ")
+                .append(order.getPaymentMethod() != null ? order.getPaymentMethod() : "—").append("\n");
+
+        if (order.getNote() != null && !order.getNote().isEmpty()) {
+            sb.append("📝 Ghi chú: ").append(order.getNote()).append("\n");
+        }
+
+        // Khách hàng
+        if (order.getCustomerName() != null && !order.getCustomerName().isEmpty()) {
+            sb.append("👤 Khách: ").append(order.getCustomerName()).append("\n");
+        }
+
+        // Thời gian
+        if (order.getCreatedAt() != null) {
+            sb.append("\n⏱ ").append(timeFmt.format(order.getCreatedAt().toDate()));
+        }
+
+        new AlertDialog.Builder(requireContext())
+                .setTitle("Đơn #" + orderId)
+                .setMessage(sb.toString())
+                .setPositiveButton("Đóng", null)
+                .show();
     }
 
     private void notifyIfNewOrders() {

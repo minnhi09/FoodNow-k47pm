@@ -9,14 +9,21 @@
     android:background="@color/white">
 
     <!-- Logo / Tên app -->
+    <ImageView
+        android:layout_width="140dp"
+        android:layout_height="140dp"
+        android:layout_marginBottom="8dp"
+        android:scaleType="fitCenter"
+        android:src="@drawable/ic_launcher_foreground_logo" />
+
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="🍔 FoodNow"
-        android:textSize="32sp"
-        android:textStyle="bold"
+        android:layout_marginBottom="40dp"
+        android:text="FoodNow"
         android:textColor="#FF5722"
-        android:layout_marginBottom="40dp" />
+        android:textSize="28sp"
+        android:textStyle="bold" />
 
     <!-- Email -->
     <com.google.android.material.textfield.TextInputLayout

@@ -18,7 +18,7 @@ local.properties
 *.apk
 *.aab
 /figma
-/app/owner-ui
+
 
 # Logs
 *.log

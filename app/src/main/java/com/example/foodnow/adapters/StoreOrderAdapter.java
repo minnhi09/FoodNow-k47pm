@@ -24,6 +24,7 @@ public class StoreOrderAdapter extends RecyclerView.Adapter<StoreOrderAdapter.Vi
     public interface OnOrderActionListener {
         void onPrimaryAction(Order order);   // Xác nhận / Sẵn sàng / Hoàn thành
         void onRejectAction(Order order);    // Từ chối / Hủy
+        void onOrderClick(Order order);      // Xem chi tiết đơn hàng
     }
 
     private final List<Order>          orders   = new ArrayList<>();
@@ -80,6 +81,18 @@ public class StoreOrderAdapter extends RecyclerView.Adapter<StoreOrderAdapter.Vi
         // Total
         h.tvTotal.setText(currFmt.format((long) order.getTotal()) + "đ");
 
+        // Địa chỉ giao hàng
+        String address = order.getAddress();
+        if (address != null && !address.isEmpty()) {
+            h.tvAddress.setVisibility(View.VISIBLE);
+            h.tvAddress.setText("📍 " + address);
+        } else {
+            h.tvAddress.setVisibility(View.GONE);
+        }
+
+        // Click card → xem chi tiết
+        h.itemView.setOnClickListener(v -> listener.onOrderClick(order));
+
         // Action buttons
         bindActionButtons(h, order);
     }
@@ -106,7 +119,7 @@ public class StoreOrderAdapter extends RecyclerView.Adapter<StoreOrderAdapter.Vi
             case Order.STATUS_READY:
                 h.btnReject.setVisibility(View.GONE);
                 h.btnPrimary.setVisibility(View.VISIBLE);
-                h.btnPrimary.setText("Đã giao");
+                h.btnPrimary.setText("Giao & Hoàn thành");
                 h.btnPrimary.setOnClickListener(v -> listener.onPrimaryAction(order));
                 break;
 
@@ -148,7 +161,7 @@ public class StoreOrderAdapter extends RecyclerView.Adapter<StoreOrderAdapter.Vi
     public int getItemCount() { return orders.size(); }
 
     static class ViewHolder extends RecyclerView.ViewHolder {
-        final TextView tvOrderId, tvStatus, tvTime, tvCustomer, tvItems, tvTotal;
+        final TextView tvOrderId, tvStatus, tvTime, tvCustomer, tvItems, tvTotal, tvAddress;
         final TextView btnPrimary, btnReject;
 
         ViewHolder(View v) {
@@ -159,6 +172,7 @@ public class StoreOrderAdapter extends RecyclerView.Adapter<StoreOrderAdapter.Vi
             tvCustomer = v.findViewById(R.id.tv_customer_name);
             tvItems    = v.findViewById(R.id.tv_order_items);
             tvTotal    = v.findViewById(R.id.tv_order_total);
+            tvAddress  = v.findViewById(R.id.tv_order_address);
             btnPrimary = v.findViewById(R.id.btn_primary_action);
             btnReject  = v.findViewById(R.id.btn_reject);
         }

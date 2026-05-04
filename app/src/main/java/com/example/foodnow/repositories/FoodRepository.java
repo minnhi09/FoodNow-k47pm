@@ -9,6 +9,7 @@ import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -48,24 +49,27 @@ public class FoodRepository {
         return liveData;
     }
 
-    /** Top 6 món có rating cao nhất (cross-store), không cần composite Firestore index */
+    /** Top 6 món có rating cao nhất — fetch all + sort in-memory, không phụ thuộc Firestore index */
     public LiveData<List<Food>> getTopRatedFoods() {
         MutableLiveData<List<Food>> liveData = new MutableLiveData<>();
         db.collection("Foods")
-                .orderBy("rating", com.google.firebase.firestore.Query.Direction.DESCENDING)
-                .limit(8)
                 .addSnapshotListener((snapshots, error) -> {
-                    if (error != null || snapshots == null) return;
+                    if (snapshots == null) {
+                        liveData.setValue(new ArrayList<>());
+                        return;
+                    }
                     List<Food> list = new ArrayList<>();
                     for (DocumentSnapshot doc : snapshots.getDocuments()) {
                         Food food = doc.toObject(Food.class);
-                        if (food != null && food.isAvailable()) {
+                        if (food != null) {
                             food.setId(doc.getId());
                             list.add(food);
-                            if (list.size() == 6) break; // tối đa 6 món sau khi lọc
                         }
                     }
-                    liveData.setValue(list);
+                    // Sort theo rating giảm dần trong memory — không cần Firestore index
+                    Collections.sort(list, (a, b) -> Float.compare(b.getRating(), a.getRating()));
+                    // Lấy tối đa 6 món
+                    liveData.setValue(list.subList(0, Math.min(6, list.size())));
                 });
         return liveData;
     }
