@@ -4,74 +4,163 @@ import com.google.firebase.Timestamp;
 
 import java.util.List;
 
-/**
- * Đơn hàng — khớp với collection Orders trong Firestore.
- * Status flow: "Đơn mới" → "Đang làm" → "Sẵn sàng" → "Đang giao" → "Hoàn thành"
- * Hoặc: "Đơn mới" → "Đã hủy"
- */
 public class Order {
 
-    // Trạng thái đơn hàng
-    public static final String STATUS_NEW        = "Đơn mới";
+    public static final String STATUS_NEW = "Đơn mới";
     public static final String STATUS_PROCESSING = "Đang làm";
-    public static final String STATUS_READY      = "Sẵn sàng";
+    public static final String STATUS_READY = "Sẵn sàng";
     public static final String STATUS_DELIVERING = "Đang giao";
-    public static final String STATUS_DONE       = "Hoàn thành";
-    public static final String STATUS_CANCELLED  = "Đã hủy";
+    public static final String STATUS_DONE = "Hoàn thành";
+    public static final String STATUS_CANCELLED = "Đã hủy";
 
-    private String        id;            // document ID (set thủ công sau khi đọc)
-    private String        userId;
-    private String        storeId;
-    private String        storeName;
-    private String        customerName;  // tên khách hàng (đọc từ Users khi cần)
-    private String        address;
-    private String        paymentMethod;
-    private String        note;
-    private double        subtotal;
-    private double        deliveryFee;
-    private double        total;
-    private String        status;
-    private Timestamp     createdAt;
+    private String id;
+    private String userId;
+    private String storeId;
+    private String storeName;
+    private String customerName;
+    private String address;
+    private String paymentMethod;
+    private String note;
+    private long subtotal;
+    private long deliveryFee;
+    private long total;
+    private String status;
+    private Timestamp createdAt;
     private List<OrderItem> items;
 
-    // Firestore yêu cầu constructor rỗng
-    public Order() {}
+    public Order() {
+    }
 
-    // ─── Getters ────────────────────────────────────────────
+    public Order(String id, String userId, String storeId, String storeName, String address,
+                 String paymentMethod, String note, long subtotal, long deliveryFee, long total,
+                 String status, Timestamp createdAt, List<OrderItem> items) {
+        this.id = id;
+        this.userId = userId;
+        this.storeId = storeId;
+        this.storeName = storeName;
+        this.address = address;
+        this.paymentMethod = paymentMethod;
+        this.note = note;
+        this.subtotal = subtotal;
+        this.deliveryFee = deliveryFee;
+        this.total = total;
+        this.status = status;
+        this.createdAt = createdAt;
+        this.items = items;
+    }
 
-    public String          getId()            { return id; }
-    public String          getUserId()        { return userId; }
-    public String          getStoreId()       { return storeId; }
-    public String          getStoreName()     { return storeName; }
-    public String          getCustomerName()  { return customerName; }
-    public String          getAddress()       { return address; }
-    public String          getPaymentMethod() { return paymentMethod; }
-    public String          getNote()          { return note; }
-    public double          getSubtotal()      { return subtotal; }
-    public double          getDeliveryFee()   { return deliveryFee; }
-    public double          getTotal()         { return total; }
-    public String          getStatus()        { return status; }
-    public Timestamp       getCreatedAt()     { return createdAt; }
-    public List<OrderItem> getItems()         { return items; }
+    public String getId() {
+        return id;
+    }
 
-    // ─── Setters ────────────────────────────────────────────
+    public void setId(String id) {
+        this.id = id;
+    }
 
-    public void setId(String id)                       { this.id            = id; }
-    public void setUserId(String userId)               { this.userId        = userId; }
-    public void setStoreId(String storeId)             { this.storeId       = storeId; }
-    public void setStoreName(String storeName)         { this.storeName     = storeName; }
-    public void setCustomerName(String customerName)   { this.customerName  = customerName; }
-    public void setAddress(String address)             { this.address       = address; }
-    public void setPaymentMethod(String paymentMethod) { this.paymentMethod = paymentMethod; }
-    public void setNote(String note)                   { this.note          = note; }
-    public void setSubtotal(double subtotal)           { this.subtotal      = subtotal; }
-    public void setDeliveryFee(double deliveryFee)     { this.deliveryFee   = deliveryFee; }
-    public void setTotal(double total)                 { this.total         = total; }
-    public void setStatus(String status)               { this.status        = status; }
-    public void setCreatedAt(Timestamp createdAt)      { this.createdAt     = createdAt; }
-    public void setItems(List<OrderItem> items)        { this.items         = items; }
+    public String getUserId() {
+        return userId;
+    }
 
-    /** Tóm tắt các món: "Phở bò x2, Bún bò x1" */
+    public void setUserId(String userId) {
+        this.userId = userId;
+    }
+
+    public String getStoreId() {
+        return storeId;
+    }
+
+    public void setStoreId(String storeId) {
+        this.storeId = storeId;
+    }
+
+    public String getStoreName() {
+        return storeName;
+    }
+
+    public void setStoreName(String storeName) {
+        this.storeName = storeName;
+    }
+
+    public String getAddress() {
+        return address;
+    }
+
+    public String getCustomerName() {
+        return customerName;
+    }
+
+    public void setAddress(String address) {
+        this.address = address;
+    }
+
+    public void setCustomerName(String customerName) {
+        this.customerName = customerName;
+    }
+
+    public String getPaymentMethod() {
+        return paymentMethod;
+    }
+
+    public void setPaymentMethod(String paymentMethod) {
+        this.paymentMethod = paymentMethod;
+    }
+
+    public String getNote() {
+        return note;
+    }
+
+    public void setNote(String note) {
+        this.note = note;
+    }
+
+    public long getSubtotal() {
+        return subtotal;
+    }
+
+    public void setSubtotal(long subtotal) {
+        this.subtotal = subtotal;
+    }
+
+    public long getDeliveryFee() {
+        return deliveryFee;
+    }
+
+    public void setDeliveryFee(long deliveryFee) {
+        this.deliveryFee = deliveryFee;
+    }
+
+    public long getTotal() {
+        return total;
+    }
+
+    public void setTotal(long total) {
+        this.total = total;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public Timestamp getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(Timestamp createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public List<OrderItem> getItems() {
+        return items;
+    }
+
+    public void setItems(List<OrderItem> items) {
+        this.items = items;
+    }
+
     public String getItemsSummary() {
         if (items == null || items.isEmpty()) return "";
         StringBuilder sb = new StringBuilder();

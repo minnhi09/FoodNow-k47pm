@@ -5,34 +5,36 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.AlertDialog;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.foodnow.R;
+import com.example.foodnow.activities.FoodDetailActivity;
 import com.example.foodnow.activities.StoreDetailActivity;
-import com.example.foodnow.adapters.FavoriteStoreAdapter;
+import com.example.foodnow.adapters.FavoriteAdapter;
 import com.example.foodnow.models.Favorite;
-import com.example.foodnow.repositories.FavoriteRepository;
-import com.google.firebase.auth.FirebaseAuth;
+import com.example.foodnow.viewmodels.FavoritesViewModel;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class FavoritesFragment extends Fragment {
 
-    private FavoriteStoreAdapter adapter;
-    private FavoriteRepository favoriteRepository;
-    private TextView tvCount;
     private RecyclerView rvFavorites;
-    private LinearLayout layoutEmpty;
+    private TextView tvFavoritesEmpty, tvFavoriteCountHeader;
+    private TextView tabAll, tabStores, tabFoods;
+    private FavoriteAdapter adapter;
+    private List<Favorite> allFavorites = new ArrayList<>();
+    private final List<Favorite> displayList = new ArrayList<>();
+    private String currentFilter = "ALL";
 
     @Nullable
     @Override
@@ -46,76 +48,102 @@ public class FavoritesFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        tvCount      = view.findViewById(R.id.tv_favorites_count);
-        rvFavorites  = view.findViewById(R.id.rv_favorites);
-        layoutEmpty  = view.findViewById(R.id.layout_favorites_empty);
+        rvFavorites = view.findViewById(R.id.rv_favorites);
+        tvFavoritesEmpty = view.findViewById(R.id.tv_favorites_empty);
+        tvFavoriteCountHeader = view.findViewById(R.id.tv_favorite_count_header);
+        
+        tabAll = view.findViewById(R.id.tab_fav_all);
+        tabStores = view.findViewById(R.id.tab_fav_stores);
+        tabFoods = view.findViewById(R.id.tab_fav_foods);
 
-        favoriteRepository = new FavoriteRepository();
+        FavoritesViewModel viewModel = new ViewModelProvider(this).get(FavoritesViewModel.class);
 
-        adapter = new FavoriteStoreAdapter();
-        adapter.setListener(new FavoriteStoreAdapter.OnFavoriteActionListener() {
+        adapter = new FavoriteAdapter(requireContext(), new FavoriteAdapter.OnFavoriteListener() {
             @Override
-            public void onStoreClick(Favorite favorite) {
-                // Mở StoreDetailActivity với storeId đã lưu
-                Intent intent = new Intent(requireContext(), StoreDetailActivity.class);
-                intent.putExtra("storeId",   favorite.getItemId());
-                intent.putExtra("storeName", favorite.getName());
-                intent.putExtra("storeImage", favorite.getImageUrl());
-                startActivity(intent);
+            public void onRemove(Favorite favorite) {
+                if (favorite.getId() != null) {
+                    viewModel.removeFavorite(favorite.getId());
+                    Toast.makeText(getContext(), "Đã xóa khỏi yêu thích", Toast.LENGTH_SHORT).show();
+                }
             }
 
             @Override
-            public void onRemoveClick(Favorite favorite) {
-                showRemoveConfirmDialog(favorite);
+            public void onClick(Favorite favorite) {
+                if ("store".equalsIgnoreCase(favorite.getType())) {
+                    Intent intent = new Intent(getContext(), StoreDetailActivity.class);
+                    intent.putExtra("storeId", favorite.getItemId());
+                    intent.putExtra("storeName", favorite.getName());
+                    intent.putExtra("storeImage", favorite.getImageUrl());
+                    startActivity(intent);
+                } else if ("food".equalsIgnoreCase(favorite.getType())) {
+                    Intent intent = new Intent(getContext(), FoodDetailActivity.class);
+                    intent.putExtra("foodId", favorite.getItemId());
+                    intent.putExtra("foodTitle", favorite.getName());
+                    intent.putExtra("foodImageUrl", favorite.getImageUrl());
+                    // Lưu ý: Các thông tin khác như giá, mô tả sẽ cần fetch lại ở FoodDetail hoặc pass thêm nếu có
+                    startActivity(intent);
+                }
             }
         });
 
         rvFavorites.setLayoutManager(new LinearLayoutManager(requireContext()));
         rvFavorites.setAdapter(adapter);
 
-        loadFavorites();
-    }
+        setupTabs();
 
-    private void loadFavorites() {
-        String uid = FirebaseAuth.getInstance().getCurrentUser() != null
-                ? FirebaseAuth.getInstance().getCurrentUser().getUid()
-                : "";
-        if (uid.isEmpty()) {
-            showEmpty(true);
-            return;
-        }
-
-        favoriteRepository.getStoreFavorites(uid).observe(getViewLifecycleOwner(), favorites -> {
-            List<Favorite> list = favorites != null ? favorites : new ArrayList<>();
-            adapter.setItems(list);
-            tvCount.setText(list.size() + " quán");
-            showEmpty(list.isEmpty());
+        viewModel.getFavorites().observe(getViewLifecycleOwner(), favorites -> {
+            allFavorites = favorites != null ? favorites : new ArrayList<>();
+            if (tvFavoriteCountHeader != null) {
+                tvFavoriteCountHeader.setText(allFavorites.size() + " mục đã lưu");
+            }
+            filterFavorites();
         });
     }
 
-    private void showRemoveConfirmDialog(Favorite favorite) {
-        if (favorite == null || !isAdded()) return;
-        new AlertDialog.Builder(requireContext())
-                .setTitle("Bỏ yêu thích?")
-                .setMessage("Bỏ \"" + favorite.getName() + "\" khỏi danh sách yêu thích?")
-                .setPositiveButton("Bỏ yêu thích", (dialog, which) -> {
-                    favoriteRepository.removeFavorite(favorite.getId())
-                            .addOnSuccessListener(unused ->
-                                    Toast.makeText(requireContext(),
-                                            "Đã bỏ yêu thích",
-                                            Toast.LENGTH_SHORT).show())
-                            .addOnFailureListener(e ->
-                                    Toast.makeText(requireContext(),
-                                            "Lỗi: " + e.getMessage(),
-                                            Toast.LENGTH_SHORT).show());
-                })
-                .setNegativeButton("Hủy", null)
-                .show();
+    private void setupTabs() {
+        if (tabAll == null) return;
+        tabAll.setOnClickListener(v -> { currentFilter = "ALL"; updateTabUi(); filterFavorites(); });
+        tabStores.setOnClickListener(v -> { currentFilter = "STORE"; updateTabUi(); filterFavorites(); });
+        tabFoods.setOnClickListener(v -> { currentFilter = "FOOD"; updateTabUi(); filterFavorites(); });
     }
 
-    private void showEmpty(boolean empty) {
-        rvFavorites.setVisibility(empty ? View.GONE : View.VISIBLE);
-        layoutEmpty.setVisibility(empty ? View.VISIBLE : View.GONE);
+    private void updateTabUi() {
+        resetTab(tabAll);
+        resetTab(tabStores);
+        resetTab(tabFoods);
+
+        TextView selected = null;
+        if (currentFilter.equals("ALL")) selected = tabAll;
+        else if (currentFilter.equals("STORE")) selected = tabStores;
+        else if (currentFilter.equals("FOOD")) selected = tabFoods;
+
+        if (selected != null) {
+            selected.setBackgroundResource(R.drawable.bg_order_tab_indicator);
+            selected.setTextColor(ContextCompat.getColor(requireContext(), R.color.white));
+        }
+    }
+
+    private void resetTab(TextView tab) {
+        if (tab == null) return;
+        tab.setBackground(null);
+        tab.setTextColor(ContextCompat.getColor(requireContext(), R.color.home_text_secondary));
+    }
+
+    private void filterFavorites() {
+        displayList.clear();
+        if (currentFilter.equals("ALL")) {
+            displayList.addAll(allFavorites);
+        } else {
+            for (Favorite f : allFavorites) {
+                if (currentFilter.equalsIgnoreCase(f.getType())) {
+                    displayList.add(f);
+                }
+            }
+        }
+        
+        adapter.submitList(displayList);
+        boolean isEmpty = displayList.isEmpty();
+        tvFavoritesEmpty.setVisibility(isEmpty ? View.VISIBLE : View.GONE);
+        rvFavorites.setVisibility(isEmpty ? View.GONE : View.VISIBLE);
     }
 }
-

@@ -1,6 +1,5 @@
 package com.example.foodnow;
 
-import android.content.Intent;
 import android.os.Bundle;
 
 import androidx.core.content.ContextCompat;
@@ -18,8 +17,9 @@ import com.google.android.material.badge.BadgeDrawable;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 public class MainActivity extends AppCompatActivity {
+
     private BottomNavigationView bottomNav;
-    private final CartManager.OnCartChangedListener cartChangedListener = this::updateCartBadge;
+    private final CartManager.OnCartChangedListener cartChangedListener = this::refreshCartBadge;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -35,38 +35,50 @@ public class MainActivity extends AppCompatActivity {
 
         setupCartBadge(bottomNav);
 
-        // ② Hiển thị tab khởi tạo
-        int initialTab = resolveInitialTab(getIntent());
+        // ② Hiển thị HomeFragment mặc định khi mở app
         if (savedInstanceState == null) {
-            bottomNav.setSelectedItemId(initialTab);
-            loadFragment(fragmentForTab(initialTab));
+            loadFragment(new HomeFragment());
+            bottomNav.setSelectedItemId(R.id.nav_home);
         }
 
         // ③ Lắng nghe sự kiện khi người dùng bấm tab
         bottomNav.setOnItemSelectedListener(item -> {
-            return loadFragment(fragmentForTab(item.getItemId()));
+            Fragment selectedFragment = null;
+            int id = item.getItemId();
+
+            if (id == R.id.nav_home) {
+                selectedFragment = new HomeFragment();
+            } else if (id == R.id.nav_cart) {
+                selectedFragment = new CartFragment();
+            } else if (id == R.id.nav_orders) {
+                selectedFragment = new OrdersFragment();
+            } else if (id == R.id.nav_favorites) {
+                selectedFragment = new FavoritesFragment();
+            } else if (id == R.id.nav_profile) {
+                selectedFragment = new ProfileFragment();
+            }
+
+            return loadFragment(selectedFragment);
         });
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        refreshCartBadge();
     }
 
     @Override
     protected void onStart() {
         super.onStart();
         CartManager.getInstance().registerListener(cartChangedListener);
-        updateCartBadge();
+        refreshCartBadge();
     }
 
     @Override
     protected void onStop() {
         CartManager.getInstance().unregisterListener(cartChangedListener);
         super.onStop();
-    }
-
-    @Override
-    protected void onNewIntent(Intent intent) {
-        super.onNewIntent(intent);
-        setIntent(intent);
-        int tab = resolveInitialTab(intent);
-        if (bottomNav != null) bottomNav.setSelectedItemId(tab);
     }
 
     // Hàm tiện ích: đặt Fragment vào fragment_container
@@ -85,36 +97,20 @@ public class MainActivity extends AppCompatActivity {
         BadgeDrawable badgeDrawable = bottomNav.getOrCreateBadge(R.id.nav_cart);
         badgeDrawable.setBackgroundColor(ContextCompat.getColor(this, R.color.home_primary_orange));
         badgeDrawable.setBadgeTextColor(ContextCompat.getColor(this, R.color.white));
-        updateCartBadge();
+        refreshCartBadge();
     }
 
-    private void updateCartBadge() {
+    public void refreshCartBadge() {
         if (bottomNav == null) return;
-        int count = CartManager.getInstance().getItemCount();
+
         BadgeDrawable badgeDrawable = bottomNav.getOrCreateBadge(R.id.nav_cart);
-        if (count <= 0) {
-            badgeDrawable.clearNumber();
+        int cartCount = CartManager.getInstance().getItemCount();
+
+        if (cartCount > 0) {
+            badgeDrawable.setVisible(true);
+            badgeDrawable.setNumber(cartCount);
+        } else {
             badgeDrawable.setVisible(false);
-            return;
         }
-        badgeDrawable.setVisible(true);
-        badgeDrawable.setNumber(Math.min(count, 99));
-    }
-
-    private int resolveInitialTab(Intent intent) {
-        if (intent == null) return R.id.nav_home;
-        String openTab = intent.getStringExtra("open_tab");
-        if ("cart".equals(openTab)) return R.id.nav_cart;
-        if ("orders".equals(openTab)) return R.id.nav_orders;
-        return R.id.nav_home;
-    }
-
-    private Fragment fragmentForTab(int id) {
-        if (id == R.id.nav_home) return new HomeFragment();
-        if (id == R.id.nav_cart) return new CartFragment();
-        if (id == R.id.nav_orders) return new OrdersFragment();
-        if (id == R.id.nav_favorites) return new FavoritesFragment();
-        if (id == R.id.nav_profile) return new ProfileFragment();
-        return new HomeFragment();
     }
 }

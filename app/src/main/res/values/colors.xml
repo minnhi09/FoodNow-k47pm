@@ -2,16 +2,32 @@
 <resources>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+
+    <!-- Semantic app tokens for shared UI surfaces/chips/tabs -->
+    <color name="app_surface">#FFFFFFFF</color>
+    <color name="app_surface_soft">#F7F3EF</color>
+    <color name="app_surface_tint">#F5E5D7</color>
+    <color name="app_outline">#EDE1D7</color>
+    <color name="app_outline_strong">#E1D2C4</color>
+    <color name="app_text_primary">#2D1D10</color>
+    <color name="app_text_secondary">#897A6D</color>
+    <color name="app_accent_primary">#D46E1F</color>
+    <color name="app_accent_primary_dark">#C9622A</color>
+    <color name="app_badge_red">#E9533F</color>
+    <color name="app_tab_container">#FFFFFFFF</color>
+    <color name="app_tab_active">#D46E1F</color>
+    <color name="app_tab_inactive">#FFFFFFFF</color>
+
     <color name="home_background">#F7F3EF</color>
-    <color name="home_primary_orange">#D46E1F</color>
-    <color name="home_primary_orange_dark">#C9622A</color>
-    <color name="home_text_primary">#2D1D10</color>
-    <color name="home_text_secondary">#897A6D</color>
-    <color name="home_border">#EDE1D7</color>
-    <color name="home_chip_bg">#F5E5D7</color>
-    <color name="home_badge_red">#E9533F</color>
+    <color name="home_primary_orange">@color/app_accent_primary</color>
+    <color name="home_primary_orange_dark">@color/app_accent_primary_dark</color>
+    <color name="home_text_primary">@color/app_text_primary</color>
+    <color name="home_text_secondary">@color/app_text_secondary</color>
+    <color name="home_border">@color/app_outline</color>
+    <color name="home_chip_bg">@color/app_surface_tint</color>
+    <color name="home_badge_red">@color/app_badge_red</color>
     <color name="home_nav_inactive">#876D58</color>
     <color name="home_search_hint">#9B8E83</color>
-    <color name="home_order_card">#D6843A</color>
+    <color name="home_order_card">@color/app_accent_primary_dark</color>
     <color name="home_price_orange">#D56D1F</color>
 </resources>
